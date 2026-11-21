@@ -1,0 +1,2276 @@
+/* =========================================================
+   CAFÉSENSE - SALES REPORTS
+   reports.css
+========================================================= */
+
+
+/* =========================
+   1. GLOBAL VARIABLES
+========================= */
+
+:root {
+    --bg-main: #f7f4ef;
+    --card-bg: #ffffff;
+
+    --sidebar-bg: #2d2019;
+    --sidebar-hover: #3d2b23;
+    --sidebar-active: #4e362c;
+
+    --caramel: #b97845;
+    --caramel-dark: #986039;
+    --caramel-light: #f5eae1;
+
+    --espresso: #35231c;
+    --text-main: #2b201b;
+    --text-muted: #8c7f77;
+
+    --border-subtle: #ede5dd;
+
+    --success-green: #388e3c;
+    --danger-red: #d9534f;
+
+    --shadow-soft: 0 10px 30px rgba(53, 35, 28, 0.05);
+}
+
+
+/* =========================
+   2. RESET
+========================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.reports-body {
+    min-height: 100vh;
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: "DM Sans", sans-serif;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--caramel);
+    outline-offset: 3px;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* =========================
+   3. APP LAYOUT
+========================= */
+
+.app-layout {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+
+/* =========================
+   4. SIDEBAR
+========================= */
+
+.sidebar {
+    width: 272px;
+    min-width: 272px;
+    height: 100%;
+
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 24px 18px;
+
+    background: var(--sidebar-bg);
+    color: #f3efe9;
+
+    flex-shrink: 0;
+
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+
+    transition:
+        width 0.3s ease,
+        min-width 0.3s ease,
+        padding 0.3s ease,
+        transform 0.3s ease;
+
+    overflow: hidden;
+    z-index: 1000;
+}
+
+
+/* SIDEBAR HEADER */
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding-bottom: 24px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    background: linear-gradient(
+        135deg,
+        var(--caramel),
+        var(--caramel-dark)
+    );
+
+    color: #ffffff;
+
+    border-radius: 12px;
+
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.brand-title {
+    min-width: 0;
+    flex: 1;
+}
+
+.brand-title h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+}
+
+.role-badge {
+    color: #e5c5a5;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+
+/* DESKTOP SIDEBAR HAMBURGER */
+
+.sidebar-header-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+
+    margin-left: auto;
+
+    flex-shrink: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+
+    background: transparent;
+    color: #f3efe9;
+
+    font-size: 15px;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.sidebar-header-toggle:hover {
+    background: var(--sidebar-hover);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+
+/* MOBILE HEADER HAMBURGER */
+
+.mobile-sidebar-toggle {
+    display: none;
+
+    width: 42px;
+    height: 42px;
+
+    font-size: 15px;
+}
+
+
+/* MOBILE SIDEBAR CLOSE BUTTON */
+
+.sidebar-close-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+
+    margin-left: auto;
+
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #ffffff;
+
+    font-size: 20px;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+    background: var(--sidebar-hover);
+    color: #ffffff;
+}
+
+
+/* SIDEBAR NAVIGATION */
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    margin-top: 20px;
+
+    flex-grow: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    white-space: nowrap;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.nav-section-label {
+    display: block;
+
+    margin-bottom: 7px;
+    padding-left: 10px;
+
+    color: #9c8a7d;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.nav-item {
+    width: 100%;
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 14px;
+
+    border: 0;
+    border-radius: 10px;
+
+    background: transparent;
+    color: #d4c5bd;
+
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+
+    text-decoration: none;
+
+    flex-shrink: 0;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.nav-item:not(.active):hover {
+    background: var(--sidebar-hover);
+    color: #ffffff;
+}
+
+.nav-item:not(.active):hover i {
+    color: #ffffff;
+}
+
+
+.nav-item.active {
+    background: linear-gradient(
+        135deg,
+        var(--caramel),
+        #a76938
+    );
+
+    color: #ffffff;
+    font-weight: 600;
+
+    box-shadow: 0 4px 15px rgba(185, 120, 69, 0.3);
+}
+
+.nav-item.active:hover {
+    background: var(--sidebar-hover);
+    box-shadow: none;
+}
+
+.nav-item.active i {
+    color: #ffffff;
+}
+
+.nav-text {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   4. ANALYTICS DROPDOWN
+========================================================= */
+
+.analytics-dropdown-toggle {
+    position: relative;
+    justify-content: flex-start;
+}
+
+.analytics-dropdown-toggle:hover {
+    background-color: var(--sidebar-hover);
+    color: white;
+}
+
+.analytics-dropdown-toggle:hover i {
+    color: white;
+}
+
+.dropdown-arrow {
+    width: auto !important;
+    min-width: auto !important;
+    margin-left: auto;
+    font-size: 11px !important;
+    transition: transform 0.25s ease;
+}
+
+.analytics-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.analytics-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-left: 14px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    max-height: 300px;
+    opacity: 1;
+    overflow: hidden;
+    transition:
+        max-height 0.3s ease,
+        opacity 0.25s ease,
+        margin 0.25s ease;
+}
+
+.analytics-nav-list.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+}
+
+.analytics-nav-item {
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 11px;
+    gap: 10px;
+}
+
+.analytics-nav-item i {
+    font-size: 12px;
+}
+
+.analytics-nav-item:hover {
+    background-color: var(--sidebar-hover);
+    color: white;
+}
+
+.analytics-nav-item:hover i {
+    color: white;
+}
+
+/* =========================
+   5. SIDEBAR FOOTER
+========================= */
+
+.sidebar-footer {
+    padding-top: 16px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 12px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+
+    min-width: 0;
+}
+
+.user-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+
+    display: grid;
+    place-items: center;
+
+    background: var(--caramel);
+    color: #ffffff;
+
+    border-radius: 50%;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    flex-shrink: 0;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.user-name {
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    color: #a39387;
+    font-size: 10px;
+}
+
+.logout-btn {
+    padding: 7px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #b39f93;
+
+    font-size: 14px;
+
+    flex-shrink: 0;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(182, 71, 61, 0.2);
+    color: #ff8075;
+}
+
+.sidebar-copyright {
+    margin-top: 12px;
+
+    color: #8c796d;
+
+    font-size: 9px;
+    text-align: center;
+}
+
+
+/* =========================
+   6. MAIN CONTENT
+========================= */
+
+.main-content {
+    flex-grow: 1;
+    min-width: 0;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+
+/* TOP HEADER */
+
+.top-header {
+    min-height: 84px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 0 36px;
+
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-subtle);
+
+    flex-shrink: 0;
+}
+
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    min-width: 0;
+}
+
+.header-greeting {
+    min-width: 0;
+}
+
+.header-greeting h1 {
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.header-greeting p {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    flex-shrink: 0;
+}
+
+.date-badge {
+    background: var(--bg-main);
+    border: 1px solid var(--border-subtle);
+    padding: 9px 14px;
+    border-radius: 10px;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.date-row,
+.time-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.date-row {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.time-row {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.date-row i,
+.time-row i {
+    width: 15px;
+    color: var(--caramel);
+    font-size: 13px;
+    text-align: center;
+}
+
+
+/* =========================
+   7. MAIN PAGE SCROLLBAR
+========================= */
+
+.reports-page-content {
+    width: 100%;
+
+    flex: 1;
+    min-height: 0;
+
+    padding: 32px 36px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scroll-behavior: smooth;
+}
+
+.reports-page-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.reports-page-content::-webkit-scrollbar-track {
+    background: #eee8e1;
+}
+
+.reports-page-content::-webkit-scrollbar-thumb {
+    background: #c3a28b;
+    border-radius: 10px;
+}
+
+.reports-page-content::-webkit-scrollbar-thumb:hover {
+    background: var(--caramel);
+}
+
+
+/* =========================
+   8. PAGE INTRODUCTION
+========================= */
+
+.page-intro {
+    margin-bottom: 30px;
+}
+
+.eyebrow,
+.section-number {
+    color: var(--caramel-dark);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.page-intro h2 {
+    margin-top: 7px;
+
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 25px;
+}
+
+.page-intro p {
+    margin-top: 7px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================
+   9. SECTION HEADINGS
+========================= */
+
+.report-filter-section,
+.sales-summary-section,
+.sales-performance-section,
+.daily-sales-section,
+.product-sales-section,
+.customer-sales-section,
+.transaction-records-section {
+    margin-bottom: 35px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin-top: 5px;
+
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 21px;
+}
+
+.section-heading p {
+    margin-top: 5px;
+
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+
+/* SALES BREAKDOWN HEADER */
+
+.sales-breakdown-heading {
+    gap: 16px;
+}
+
+.sales-breakdown-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+
+/* =========================
+   10. REPORT FILTERS
+========================= */
+
+.report-filter-card {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
+    align-items: end;
+    gap: 18px;
+
+    padding: 22px;
+
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    min-width: 0;
+}
+
+.filter-group label {
+    color: var(--text-main);
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+
+    padding: 0 12px;
+
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+
+    outline: none;
+
+    background: #ffffff;
+    color: var(--text-main);
+
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    border-color: var(--caramel);
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary,
+.btn-secondary {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 0 15px;
+
+    border-radius: 8px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-primary {
+    border: 1px solid var(--caramel);
+    background: var(--caramel);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: var(--caramel-dark);
+    border-color: var(--caramel-dark);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    border: 1px solid var(--border-subtle);
+    background: var(--caramel-light);
+    color: var(--espresso);
+}
+
+.btn-secondary:hover {
+    background: #ead8c8;
+}
+
+.report-period-label {
+    margin-top: 13px;
+
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+
+/* =========================
+   11. SALES SUMMARY CARDS
+========================= */
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.summary-card {
+    min-width: 0;
+
+    padding: 20px;
+
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-soft);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(53, 35, 28, 0.09);
+}
+
+.summary-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.summary-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+
+    display: grid;
+    place-items: center;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    border-radius: 10px;
+
+    font-size: 15px;
+}
+
+.summary-card h3 {
+    margin-top: 17px;
+
+    color: var(--espresso);
+
+    font-size: 24px;
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+}
+
+.summary-card > p {
+    margin-top: 5px;
+
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+
+/* =========================
+   12. CHART CARD
+========================= */
+
+.chart-card {
+    position: relative;
+
+    padding: 24px;
+
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin-bottom: 22px;
+}
+
+.chart-header h3 {
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 17px;
+}
+
+.chart-header p {
+    margin-top: 5px;
+
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.chart-unit {
+    padding: 7px 11px;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    border-radius: 7px;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.chart-container {
+    position: relative;
+
+    width: 100%;
+    height: 320px;
+}
+
+.chart-empty-state {
+    padding: 25px;
+
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.chart-empty-state i {
+    margin-bottom: 10px;
+
+    color: #b9a69b;
+    font-size: 28px;
+}
+
+.chart-empty-state p {
+    font-size: 12px;
+}
+
+
+/* =========================
+   13. TABLE CARDS
+========================= */
+
+.table-card {
+    overflow: hidden;
+
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.table-header {
+    min-height: 75px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+
+    padding: 18px 22px;
+
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.table-header > div:first-child {
+    min-width: 0;
+}
+
+.table-header h3 {
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 15px;
+}
+
+.table-header p {
+    margin-top: 5px;
+
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.report-table {
+    width: 100%;
+
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.report-table thead {
+    background: #faf7f3;
+}
+
+.report-table th {
+    padding: 14px 18px;
+
+    border-bottom: 1px solid var(--border-subtle);
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.report-table td {
+    padding: 15px 18px;
+
+    border-bottom: 1px solid #f2ede8;
+
+    color: var(--text-main);
+    font-size: 11px;
+}
+
+.report-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-table tbody tr:hover {
+    background: #fcfaf8;
+}
+
+.empty-table-message {
+    padding: 30px 15px !important;
+
+    color: var(--text-muted) !important;
+    text-align: center;
+}
+
+
+/* =========================
+   14. EXPORT BUTTONS
+========================= */
+
+.export-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-export {
+    min-height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 12px;
+
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: var(--text-main);
+
+    font-size: 10px;
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.btn-export:hover {
+    border-color: var(--caramel);
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+}
+
+
+/* =========================
+   15. FOOTER
+========================= */
+
+.main-footer {
+    margin-top: 10px;
+    padding: 20px 30px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    text-align: center;
+}
+
+
+/* =========================
+   16. COLLAPSED DESKTOP SIDEBAR
+   MATCHES DASHBOARD
+========================= */
+
+@media (min-width: 851px) {
+
+    .sidebar.collapsed {
+        width: 78px;
+        min-width: 78px;
+
+        padding: 24px 10px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sidebar.collapsed .brand-logo {
+        display: grid !important;
+
+        width: 42px;
+        height: 42px;
+
+        margin: 0 auto;
+
+        order: 0;
+    }
+
+    .sidebar.collapsed .sidebar-header-toggle {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+
+        margin: 0 auto;
+
+        order: 1;
+    }
+
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .sidebar-close-btn,
+    .sidebar.collapsed .nav-section-label,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .user-info,
+    .sidebar.collapsed .sidebar-copyright {
+        display: none !important;
+    }
+
+    .sidebar.collapsed .sidebar-nav {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .sidebar.collapsed .nav-section {
+        align-items: center;
+        width: 100%;
+    }
+
+    .sidebar.collapsed .nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 0;
+
+        width: 100%;
+        min-height: 44px;
+
+        padding: 10px 0;
+    }
+
+    .sidebar.collapsed .nav-item i {
+        display: inline-flex !important;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 22px;
+        min-width: 22px;
+        height: 22px;
+
+        font-size: 17px;
+
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .sidebar.collapsed .analytics-dropdown-toggle {
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .sidebar.collapsed .analytics-dropdown-toggle .dropdown-arrow {
+        display: inline-flex !important;
+
+        width: 10px !important;
+        min-width: 10px !important;
+
+        margin-left: 0;
+
+        font-size: 9px !important;
+    }
+
+    .sidebar.collapsed .analytics-nav-list {
+        display: flex !important;
+
+        flex-direction: column;
+        align-items: center;
+
+        width: 100%;
+
+        max-height: 250px;
+
+        margin: 4px 0 0;
+        padding: 0;
+
+        border-left: none;
+
+        opacity: 1;
+        overflow: hidden;
+
+        gap: 3px;
+    }
+
+    .sidebar.collapsed .analytics-nav-list.collapsed {
+        max-height: 0;
+
+        margin-top: 0;
+        margin-bottom: 0;
+
+        opacity: 0;
+
+        pointer-events: none;
+    }
+
+    .sidebar.collapsed .analytics-nav-item {
+        justify-content: center;
+
+        width: 100%;
+        min-height: 38px;
+
+        padding: 8px 0;
+
+        gap: 0;
+    }
+
+    .sidebar.collapsed .analytics-nav-item i {
+        display: inline-flex !important;
+
+        width: 22px;
+        min-width: 22px;
+
+        font-size: 15px;
+    }
+
+    .sidebar.collapsed .user-profile-card {
+        justify-content: center;
+
+        padding: 8px 4px;
+        gap: 4px;
+
+        flex-wrap: wrap;
+    }
+
+    .sidebar.collapsed .logout-btn {
+        display: grid !important;
+        place-items: center;
+
+        padding: 7px;
+    }
+
+}
+
+
+/* =========================
+   17. TABLET RESPONSIVENESS
+========================= */
+
+@media (max-width: 1200px) {
+
+    .reports-page-content {
+        padding: 26px 24px;
+    }
+
+    .top-header {
+        padding: 0 24px;
+    }
+
+    .report-filter-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-actions {
+        grid-column: 1 / -1;
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+}
+
+
+/* =========================
+   18. MOBILE SIDEBAR
+   MATCHES DASHBOARD
+========================= */
+
+@media (max-width: 850px) {
+
+    .sidebar {
+        position: fixed;
+
+        top: 0;
+        left: 0;
+        bottom: 0;
+
+        width: 272px;
+        min-width: 272px;
+
+        height: 100vh;
+        height: 100dvh;
+
+        padding: 24px 18px;
+
+        z-index: 1000;
+
+        transform: translateX(-100%);
+
+        overflow: hidden;
+
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-header-toggle {
+        display: none !important;
+    }
+
+    .sidebar-close-btn {
+        display: inline-flex;
+    }
+
+    .sidebar.collapsed {
+        width: 272px;
+        min-width: 272px;
+
+        padding: 24px 18px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: flex-start;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .sidebar.collapsed .brand-logo {
+        display: grid !important;
+        margin: 0;
+    }
+
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .nav-section-label,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .user-info,
+    .sidebar.collapsed .sidebar-copyright {
+        display: block !important;
+    }
+
+    .sidebar.collapsed .sidebar-close-btn {
+        display: inline-flex;
+    }
+
+    .sidebar.collapsed .nav-section {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .sidebar.collapsed .nav-item {
+        justify-content: flex-start;
+
+        gap: 12px;
+
+        width: 100%;
+        min-height: 42px;
+
+        padding: 10px 14px;
+    }
+
+    .sidebar.collapsed .nav-item i {
+        display: inline-flex !important;
+
+        width: 18px;
+        min-width: 18px;
+
+        height: auto;
+
+        font-size: 15px;
+    }
+
+    .sidebar.collapsed .analytics-dropdown-toggle {
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .sidebar.collapsed .analytics-dropdown-toggle .dropdown-arrow {
+        display: inline-flex !important;
+
+        width: auto !important;
+        min-width: auto !important;
+
+        margin-left: auto;
+
+        font-size: 11px !important;
+    }
+
+    .sidebar.collapsed .analytics-nav-list {
+        display: flex !important;
+
+        align-items: stretch;
+
+        width: auto;
+
+        max-height: 300px;
+
+        margin: 0 0 0 14px;
+        padding: 0 0 0 12px;
+
+        border-left: 1px solid rgba(255, 255, 255, 0.12);
+
+        opacity: 1;
+    }
+
+    .sidebar.collapsed .analytics-nav-list.collapsed {
+        max-height: 0;
+
+        margin-top: 0;
+        margin-bottom: 0;
+
+        opacity: 0;
+
+        pointer-events: none;
+    }
+
+    .sidebar.collapsed .analytics-nav-item {
+        justify-content: flex-start;
+
+        width: 100%;
+        min-height: 36px;
+
+        padding: 8px 12px;
+
+        gap: 10px;
+    }
+
+    .sidebar.collapsed .analytics-nav-item i {
+        width: 18px;
+        min-width: 18px;
+
+        font-size: 12px;
+    }
+
+    .sidebar.collapsed .user-profile-card {
+        justify-content: flex-start;
+
+        padding: 10px 12px;
+
+        gap: 10px;
+
+        flex-wrap: nowrap;
+    }
+
+    .sidebar.collapsed .logout-btn {
+        display: block !important;
+    }
+
+    .sidebar-nav {
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 0;
+    }
+
+    .mobile-sidebar-toggle {
+        display: grid;
+    }
+
+    body.sidebar-overlay-active::before {
+        content: "";
+
+        position: fixed;
+        inset: 0;
+
+        background: rgba(25, 17, 13, 0.48);
+
+        z-index: 999;
+    }
+
+    .main-content {
+        width: 100%;
+        min-width: 0;
+    }
+
+}
+
+
+/* =========================
+   19. MOBILE RESPONSIVENESS
+========================= */
+
+@media (max-width: 650px) {
+
+    .top-header {
+        min-height: 75px;
+
+        padding: 15px 18px;
+        gap: 12px;
+    }
+
+    .header-left-group {
+        gap: 10px;
+    }
+
+    .mobile-sidebar-toggle {
+        width: 38px;
+        height: 38px;
+    }
+
+    .header-greeting h1 {
+        font-size: 18px;
+    }
+
+    .header-greeting p {
+        max-width: 240px;
+        font-size: 10px;
+    }
+
+    .date-badge {
+    padding: 8px 10px;
+    gap: 5px;
+}
+
+    .date-row {
+        font-size: 9px;
+    }
+
+    .time-row {
+        font-size: 10px;
+    }
+
+    .date-row i,
+    .time-row i {
+        display: inline-flex;
+        font-size: 11px;
+    }
+
+    .reports-page-content {
+        padding: 22px 16px;
+    }
+
+    .page-intro h2 {
+        font-size: 21px;
+    }
+
+    .page-intro p {
+        font-size: 11px;
+    }
+
+    .report-filter-card {
+        grid-template-columns: 1fr;
+        gap: 14px;
+
+        padding: 17px;
+    }
+
+    .filter-actions {
+        grid-column: auto;
+        flex-wrap: wrap;
+    }
+
+    .filter-actions button {
+        flex: 1;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .summary-card {
+        padding: 17px;
+    }
+
+    .summary-card h3 {
+        font-size: 22px;
+    }
+
+    .chart-card {
+        padding: 18px;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .table-header {
+        align-items: flex-start;
+        flex-direction: column;
+
+        padding: 16px;
+    }
+
+    .transaction-table-header,
+    .product-table-header,
+    .customer-table-header {
+        gap: 12px;
+    }
+
+    .export-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .btn-export {
+        flex: 1 1 auto;
+        padding: 0 8px;
+    }
+
+    .sales-breakdown-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .sales-breakdown-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .sales-breakdown-actions .btn-export {
+        flex: 1 1 auto;
+    }
+
+    .report-table th,
+    .report-table td {
+        padding: 12px;
+    }
+
+    .main-footer {
+        padding: 20px 10px;
+    }
+
+}
+
+
+/* =========================
+   20. SMALL MOBILE
+========================= */
+
+@media (max-width: 380px) {
+
+    .header-greeting h1 {
+        font-size: 16px;
+    }
+
+    .header-greeting p {
+        max-width: 175px;
+    }
+
+    .date-badge {
+    padding: 7px 8px;
+}
+
+    .date-row {
+        font-size: 8px;
+    }
+
+    .time-row {
+        font-size: 9px;
+}
+
+}
+
+
+/* =========================
+   21. PRINT REPORT
+========================= */
+
+@media print {
+
+    html,
+    body.reports-body,
+    .app-layout {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    body.reports-body {
+        display: block;
+        background: #ffffff;
+    }
+
+    .sidebar,
+    .top-header,
+    .report-filter-section,
+    .export-actions,
+    .sales-breakdown-actions,
+    .main-footer {
+        display: none !important;
+    }
+
+    .main-content {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+
+    .reports-page-content {
+        width: 100%;
+        max-width: none;
+
+        height: auto;
+        overflow: visible;
+
+        padding: 0;
+    }
+
+    .summary-card,
+    .chart-card,
+    .table-card {
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    .sales-summary-section,
+    .sales-performance-section,
+    .daily-sales-section,
+    .product-sales-section,
+    .customer-sales-section,
+    .transaction-records-section {
+        break-inside: avoid;
+    }
+
+    .report-table {
+        white-space: normal;
+    }
+
+}
+
+
+/* =========================
+   22. REDUCED MOTION
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+
+}
+
+
+/* =========================================================
+   23. SYSTEM DIALOGS
+========================================================= */
+
+#cafeSenseDialog {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(35, 25, 20, 0.55);
+    backdrop-filter: blur(3px);
+}
+
+#cafeSenseDialog.active {
+    display: flex;
+}
+
+.cafe-dialog-box {
+    width: 100%;
+    max-width: 420px;
+
+    padding: 30px;
+
+    background: #ffffff;
+    border-radius: 16px;
+
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.18);
+
+    text-align: center;
+
+    animation: cafeDialogShow 0.2s ease;
+}
+
+.cafe-dialog-icon {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    background: var(--caramel-light);
+    color: var(--caramel);
+
+    font-size: 25px;
+}
+
+.cafe-dialog-title {
+    margin-bottom: 10px;
+
+    color: var(--espresso);
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.cafe-dialog-message {
+    color: #766b64;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cafe-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+
+    margin-top: 25px;
+}
+
+.cafe-dialog-btn {
+    min-width: 105px;
+
+    padding: 11px 20px;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.cafe-dialog-btn.primary {
+    background: var(--caramel);
+    color: #ffffff;
+}
+
+.cafe-dialog-btn.primary:hover {
+    background: var(--caramel-dark);
+}
+
+.cafe-dialog-btn.secondary {
+    background: #f1ece8;
+    color: #51443c;
+}
+
+.cafe-dialog-btn.secondary:hover {
+    background: #e7ded7;
+}
+
+@keyframes cafeDialogShow {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================================================
+   24. DASHBOARD-STYLE LOGOUT MODAL
+========================================================= */
+
+body.logout-modal-open {
+    overflow: hidden;
+}
+
+.logout-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(35, 24, 18, 0.58);
+    backdrop-filter: blur(4px);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition:
+        opacity 0.22s ease,
+        visibility 0.22s ease;
+}
+
+.logout-modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.logout-modal {
+    position: relative;
+
+    width: 100%;
+    max-width: 420px;
+
+    padding: 36px 34px 30px;
+
+    background: var(--card-bg);
+    border: 1px solid rgba(237, 229, 221, 0.95);
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 70px rgba(30, 20, 15, 0.24),
+        0 5px 15px rgba(30, 20, 15, 0.08);
+
+    text-align: center;
+
+    transform: translateY(18px) scale(0.96);
+
+    transition: transform 0.22s ease;
+}
+
+.logout-modal-overlay.show .logout-modal {
+    transform: translateY(0) scale(1);
+}
+
+.logout-modal-icon {
+    width: 66px;
+    height: 66px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    font-size: 24px;
+
+    box-shadow: 0 5px 15px rgba(185, 120, 69, 0.12);
+}
+
+.logout-modal-eyebrow {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--caramel-dark);
+
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+}
+
+.logout-modal h2 {
+    color: var(--espresso);
+
+    font-family: "Playfair Display", serif;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.logout-modal p {
+    max-width: 315px;
+
+    margin: 12px auto 28px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.logout-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.logout-modal-cancel,
+.logout-modal-confirm {
+    min-height: 45px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    flex: 1;
+
+    padding: 0 20px;
+
+    border: none;
+    border-radius: 9px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.logout-modal-cancel {
+    background: #f5f1ed;
+    color: var(--espresso);
+}
+
+.logout-modal-cancel:hover {
+    background: #ebe3dc;
+}
+
+.logout-modal-confirm {
+    background: var(--caramel);
+    color: #ffffff;
+}
+
+.logout-modal-confirm:hover {
+    background: var(--caramel-dark);
+}
+
+.logout-modal-cancel:active,
+.logout-modal-confirm:active {
+    transform: scale(0.97);
+}
+
+.logout-modal-cancel:focus-visible,
+.logout-modal-confirm:focus-visible {
+    outline: 2px solid var(--caramel);
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   25. DIALOG RESPONSIVENESS
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .cafe-dialog-box {
+        padding: 25px 20px;
+    }
+
+    .logout-modal-overlay {
+        padding: 18px;
+    }
+
+    .logout-modal {
+        max-width: 360px;
+
+        padding: 30px 23px 25px;
+
+        border-radius: 17px;
+    }
+
+    .logout-modal-icon {
+        width: 58px;
+        height: 58px;
+    }
+
+    .logout-modal h2 {
+        font-size: 22px;
+    }
+
+    .logout-modal p {
+        margin-bottom: 24px;
+        font-size: 11px;
+    }
+
+    .logout-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .logout-modal-cancel,
+    .logout-modal-confirm {
+        width: 100%;
+        min-height: 44px;
+    }
+
+}
+
+
+/* =========================================================
+   26. DIALOG REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .cafe-dialog-box {
+        animation: none;
+    }
+
+    .logout-modal-overlay,
+    .logout-modal {
+        transition: none;
+    }
+
+}

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>User Management | CaféSense</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./users.css">
+
+    <!-- JavaScript -->
+    <script src="./users.js" defer></script>
+</head>
+
+<body class="dashboard-body">
+
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+
+            <!-- BRAND -->
+            <div class="sidebar-header">
+
+                <div class="brand-logo">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+
+                <div class="brand-title">
+                    <h2>CaféSense</h2>
+
+                    <span class="role-badge" id="sidebar-role-badge">
+                        User Portal
+                    </span>
+                </div>
+
+                <!-- DESKTOP SIDEBAR TOGGLE -->
+                <button
+                    type="button"
+                    class="sidebar-toggle-btn sidebar-header-toggle"
+                    id="sidebarToggle"
+                    title="Toggle Sidebar"
+                    aria-label="Toggle sidebar"
+                    aria-expanded="true"
+                >
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <!-- MOBILE SIDEBAR CLOSE -->
+                <button
+                    type="button"
+                    class="sidebar-close-btn"
+                    id="sidebarClose"
+                    title="Close Sidebar"
+                    aria-label="Close sidebar"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="sidebar-nav">
+
+                <!-- GENERAL -->
+                <div class="nav-section">
+
+                    <span class="nav-section-label">GENERAL</span>
+
+                    <a
+                        href="./dashboard.html"
+                        class="nav-item"
+                        title="Dashboard Overview"
+                    >
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span class="nav-text">Dashboard / Overview</span>
+                    </a>
+
+                </div>
+
+                <!-- OPERATIONS -->
+                <div class="nav-section">
+
+                    <span class="nav-section-label">OPERATIONS</span>
+
+                    <a
+                        href="./transactions.html"
+                        class="nav-item"
+                        title="Transaction POS"
+                    >
+                        <i class="fa-solid fa-cash-register"></i>
+                        <span class="nav-text">Transaction POS</span>
+                    </a>
+
+                    <a
+                        href="./products.html"
+                        class="nav-item"
+                        title="Inventory and Menu"
+                    >
+                        <i class="fa-solid fa-box-open"></i>
+                        <span class="nav-text">Inventory &amp; Menu</span>
+                    </a>
+
+                </div>
+
+                <!-- ANALYTICS & INSIGHTS -->
+                <div class="nav-section analytics-nav-section manager-owner">
+
+                    <span class="nav-section-label">
+                        ANALYTICS &amp; INSIGHTS
+                    </span>
+
+                    <button
+                        type="button"
+                        class="nav-item analytics-dropdown-toggle"
+                        id="analyticsDropdownToggle"
+                        aria-expanded="false"
+                        aria-controls="analyticsNavList"
+                        title="Analytics and Insights"
+                    >
+                        <i class="fa-solid fa-chart-line"></i>
+
+                        <span class="nav-text">
+                            Analytics &amp; Insights
+                        </span>
+
+                        <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+                    </button>
+
+                    <div
+                        class="analytics-nav-list collapsed"
+                        id="analyticsNavList"
+                    >
+
+                        <a
+                            href="./analytics.html#sales-analytics"
+                            class="nav-item analytics-nav-item"
+                        >
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span class="nav-text">Sales Analytics</span>
+                        </a>
+
+                        <a
+                            href="./analytics.html#payment-analytics"
+                            class="nav-item analytics-nav-item"
+                        >
+                            <i class="fa-solid fa-wallet"></i>
+                            <span class="nav-text">Payment Analytics</span>
+                        </a>
+
+                        <a
+                            href="./analytics.html#customer-analytics"
+                            class="nav-item analytics-nav-item"
+                        >
+                            <i class="fa-solid fa-users"></i>
+                            <span class="nav-text">Customer Analytics</span>
+                        </a>
+
+                        <a
+                            href="./analytics.html#product-analytics"
+                            class="nav-item analytics-nav-item"
+                        >
+                            <i class="fa-solid fa-mug-hot"></i>
+                            <span class="nav-text">Product Analytics</span>
+                        </a>
+
+                        <a
+                            href="./analytics.html#peak-hours-analytics"
+                            class="nav-item analytics-nav-item"
+                        >
+                            <i class="fa-solid fa-clock"></i>
+                            <span class="nav-text">Peak Hours Analytics</span>
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <!-- REPORTS -->
+                <div class="nav-section manager-owner">
+
+                    <span class="nav-section-label">REPORTS</span>
+
+                    <a
+                        href="./reports.html"
+                        class="nav-item"
+                        title="Sales Reports"
+                    >
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span class="nav-text">Sales Reports</span>
+                    </a>
+
+                </div>
+
+                <!-- ADMINISTRATION -->
+                <div class="nav-section owner-only">
+
+                    <span class="nav-section-label">ADMINISTRATION</span>
+
+                    <a
+                        href="./users.html"
+                        class="nav-item active"
+                        title="User Management"
+                        aria-current="page"
+                    >
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span class="nav-text">User Management</span>
+                    </a>
+
+                </div>
+
+            </nav>
+
+            <!-- SIDEBAR FOOTER -->
+            <div class="sidebar-footer">
+
+                <div class="user-profile-card">
+
+                    <div
+                        class="user-avatar-placeholder"
+                        id="display-user-initials"
+                    >
+                        U
+                    </div>
+
+                    <div class="user-info">
+
+                        <span
+                            id="sidebarUserName"
+                            class="user-name"
+                        >
+                            User
+                        </span>
+
+                        <span
+                            class="user-role"
+                            id="sidebarUserRole"
+                        >
+                            Owner
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        id="logout-btn"
+                        class="logout-btn"
+                        title="Sign Out"
+                        aria-label="Sign Out"
+                    >
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+
+                </div>
+
+                <p class="sidebar-copyright">
+                    © 2026 CaféSense
+                </p>
+
+            </div>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- TOP HEADER -->
+            <header class="top-header">
+
+                <div class="header-left-group">
+
+                    <!-- MOBILE SIDEBAR TOGGLE -->
+                    <button
+                        type="button"
+                        class="sidebar-toggle-btn mobile-sidebar-toggle"
+                        id="mobileSidebarToggle"
+                        title="Open Sidebar"
+                        aria-label="Open navigation"
+                        aria-expanded="false"
+                    >
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+
+                    <div class="header-greeting">
+
+                        <h1>User Management</h1>
+
+                        <p>
+                            Manage CaféSense accounts and user permissions.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <!-- DATE AND TIME -->
+                <div class="header-actions">
+
+                    <div class="date-badge">
+
+                        <div class="date-row">
+                            <i class="fa-regular fa-calendar-days"></i>
+                            <span id="current-date"></span>
+                        </div>
+
+                        <div class="time-row">
+                            <i class="fa-regular fa-clock"></i>
+                            <span id="current-time"></span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+            <!-- MAIN CONTENT AREA -->
+            <section class="content-area">
+
+                <!-- SUMMARY CARDS -->
+                <div class="summary-grid">
+
+                    <div class="summary-card">
+
+                        <div class="summary-icon total-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+
+                        <div>
+                            <p>Total Users</p>
+                            <h2 id="totalUsers">0</h2>
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-icon owner-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+
+                        <div>
+                            <p>Owners</p>
+                            <h2 id="ownerCount">0</h2>
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-icon manager-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+
+                        <div>
+                            <p>Managers</p>
+                            <h2 id="managerCount">0</h2>
+                        </div>
+
+                    </div>
+
+                    <div class="summary-card">
+
+                        <div class="summary-icon staff-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+
+                        <div>
+                            <p>Staff</p>
+                            <h2 id="staffCount">0</h2>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- USER TABLE SECTION -->
+                <div class="users-section">
+
+                    <div class="section-header">
+
+                        <div>
+                            <h2>System Users</h2>
+                            <p>View and manage registered accounts.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="addUserBtn"
+                            class="primary-btn"
+                        >
+                            <i class="fas fa-plus"></i>
+                            Add New User
+                        </button>
+
+                    </div>
+
+                    <!-- SEARCH AND FILTER -->
+                    <div class="table-controls">
+
+                        <div class="search-box">
+
+                            <i class="fas fa-search"></i>
+
+                            <input
+                                type="text"
+                                id="userSearch"
+                                placeholder="Search name, username, or email..."
+                            >
+
+                        </div>
+
+                        <select id="roleFilter">
+                            <option value="All">All Roles</option>
+                            <option value="Owner">Owner</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Staff">Staff</option>
+                        </select>
+
+                    </div>
+
+                    <!-- TABLE -->
+                    <div class="table-wrapper">
+
+                        <table class="users-table">
+
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="usersTableBody">
+                            </tbody>
+
+                        </table>
+
+                        <div id="emptyState" class="empty-state" hidden>
+
+                            <i class="fas fa-users"></i>
+
+                            <h3>No users found</h3>
+
+                            <p>
+                                There are no matching user accounts.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- ADD / EDIT USER MODAL -->
+    <div class="modal-overlay" id="userModal">
+
+        <div class="user-modal">
+
+            <div class="modal-header">
+
+                <div>
+                    <h2 id="modalTitle">Add New User</h2>
+
+                    <p id="modalDescription">
+                        Create a new CaféSense account.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    id="closeModalBtn"
+                    class="close-modal-btn"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+
+            </div>
+
+            <form id="userForm">
+
+                <input type="hidden" id="editUserIndex">
+
+                <div class="form-group">
+
+                    <label for="fullName">Full Name</label>
+
+                    <input
+                        type="text"
+                        id="fullName"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="username">Username</label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Enter username"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="email">Email Address</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Enter email address"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="userRole">User Role</label>
+
+                    <select id="userRole" required>
+                        <option value="">Select a role</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Staff">Staff</option>
+                    </select>
+
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+
+                    <label for="password">Password</label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter password (minimum 8 characters)"
+                        minlength="8"
+                    >
+
+                    <small class="input-note">
+                        Leave blank when editing if you don't want to change the password.
+                    </small>
+
+                </div>
+
+                <div class="form-group" id="confirmPasswordGroup">
+
+                    <label for="confirmPassword">Confirm Password</label>
+
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        placeholder="Confirm password"
+                    >
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        id="cancelUserBtn"
+                        class="secondary-btn"
+                    >
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="primary-btn">
+                        Save User
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- CUSTOM DIALOG -->
+    <div class="dialog-overlay" id="dialogOverlay">
+
+        <div class="dialog-box">
+
+            <div class="dialog-icon" id="dialogIcon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+
+            <h3 id="dialogTitle">Notice</h3>
+
+            <p id="dialogMessage">Message goes here.</p>
+
+            <div class="dialog-actions" id="dialogActions">
+
+                <button
+                    type="button"
+                    id="dialogOkBtn"
+                    class="primary-btn"
+                >
+                    Okay
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

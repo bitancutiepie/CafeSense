@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CaféSense | Dashboard</title>
+
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- CHART.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./dashboard.css">
+
+</head>
+
+<body class="dashboard-body">
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- SIDEBAR HEADER -->
+        <div class="sidebar-header">
+
+            <div class="brand-logo">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+
+            <div class="brand-title">
+                <h2>CaféSense</h2>
+                <span class="role-badge">Owner Portal</span>
+            </div>
+
+            <!-- DESKTOP SIDEBAR TOGGLE -->
+            <button
+                type="button"
+                class="sidebar-toggle-btn sidebar-header-toggle"
+                id="sidebarToggle"
+                title="Collapse or Expand Sidebar"
+                aria-label="Toggle Sidebar"
+                aria-controls="sidebar"
+                aria-expanded="true">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+            <!-- MOBILE SIDEBAR CLOSE BUTTON -->
+            <button
+                type="button"
+                class="sidebar-close-btn"
+                id="sidebarClose"
+                title="Close Sidebar"
+                aria-label="Close Sidebar">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="sidebar-nav">
+
+            <!-- GENERAL -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">GENERAL</span>
+
+                <a
+                    href="./dashboard.html"
+                    class="nav-item active"
+                    title="Dashboard Overview"
+                    aria-label="Dashboard Overview"
+                    aria-current="page">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="nav-text">Dashboard / Overview</span>
+
+                </a>
+
+            </div>
+
+            <!-- OPERATIONS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">OPERATIONS</span>
+
+                <a
+                    href="./transactions.html"
+                    class="nav-item"
+                    title="Transaction POS"
+                    aria-label="Transaction POS">
+
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span class="nav-text">Transaction POS</span>
+
+                </a>
+
+                <a
+                    href="./products.html"
+                    class="nav-item"
+                    title="Inventory and Menu"
+                    aria-label="Inventory and Menu">
+
+                    <i class="fa-solid fa-box-open"></i>
+                    <span class="nav-text">Inventory & Menu</span>
+
+                </a>
+
+            </div>
+
+            <!-- ANALYTICS & INSIGHTS -->
+            <div class="nav-section analytics-nav-section">
+
+                <span class="nav-section-label">ANALYTICS & INSIGHTS</span>
+
+                <button
+                    type="button"
+                    class="nav-item analytics-dropdown-toggle"
+                    id="analyticsDropdownToggle"
+                    title="Analytics and Insights"
+                    aria-label="Analytics and Insights"
+                    aria-expanded="false"
+                    aria-controls="analyticsNavList">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span class="nav-text">Analytics & Insights</span>
+
+                    <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+
+                </button>
+
+                <div
+                    class="analytics-nav-list collapsed"
+                    id="analyticsNavList">
+
+                    <a
+                        href="./analytics.html#sales-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Sales Analytics">
+
+                        <i class="fa-solid fa-chart-column"></i>
+                        <span class="nav-text">Sales Analytics</span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#payment-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Payment Analytics">
+
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="nav-text">Payment Analytics</span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#customer-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Customer Analytics">
+
+                        <i class="fa-solid fa-users"></i>
+                        <span class="nav-text">Customer Analytics</span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#product-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Product Analytics">
+
+                        <i class="fa-solid fa-box"></i>
+                        <span class="nav-text">Product Analytics</span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#peak-hours-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Peak Hours Analytics">
+
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="nav-text">Peak Hours Analytics</span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <!-- REPORTS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">REPORTS</span>
+
+                <a
+                    href="./reports.html"
+                    class="nav-item"
+                    title="Sales Reports"
+                    aria-label="Sales Reports">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span class="nav-text">Sales Reports</span>
+
+                </a>
+
+            </div>
+
+            <!-- ADMINISTRATION -->
+            <div class="nav-section owner-only">
+
+                <span class="nav-section-label">ADMINISTRATION</span>
+
+                <a
+                    href="./users.html"
+                    class="nav-item"
+                    title="User Management"
+                    aria-label="User Management">
+
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span class="nav-text">User Management</span>
+
+                </a>
+
+            </div>
+
+        </nav>
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-footer">
+
+            <div class="user-profile-card">
+
+                <div class="user-avatar-placeholder">MS</div>
+
+                <div class="user-info">
+
+                    <span id="display-user-name" class="user-name">
+                        Maria Santos
+                    </span>
+
+                    <span class="user-role">Lead Administrator</span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="logout-btn"
+                    class="logout-btn"
+                    title="Sign Out"
+                    aria-label="Sign Out">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                </button>
+
+            </div>
+
+            <p class="sidebar-copyright">© 2026 CaféSense</p>
+
+        </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP HEADER -->
+        <header class="top-header">
+
+            <div class="header-left-group">
+
+                <!-- MOBILE SIDEBAR OPEN BUTTON -->
+                <button
+                    type="button"
+                    class="sidebar-toggle-btn mobile-sidebar-toggle"
+                    id="mobileSidebarToggle"
+                    title="Open Sidebar"
+                    aria-label="Open Sidebar"
+                    aria-controls="sidebar"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div class="header-greeting">
+
+                    <h1 id="page-title">Dashboard Overview</h1>
+
+                    <p>
+                        Here's what's brewing across your counters today.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="header-actions">
+
+    <div class="date-badge">
+
+        <div class="date-row">
+
+            <i class="fa-regular fa-calendar-days"></i>
+
+            <span id="current-date"></span>
+
+        </div>
+
+        <div class="time-row">
+
+            <i class="fa-regular fa-clock"></i>
+
+            <span id="current-time"></span>
+
+        </div>
+
+    </div>
+
+</div>
+
+        </header>
+
+        <!-- DASHBOARD PAGE CONTENT -->
+        <div class="dashboard-page-content">
+
+            <!-- DASHBOARD OVERVIEW -->
+            <section id="tab-overview" class="dashboard-tab">
+
+                <!-- DASHBOARD FILTERS -->
+                <div class="filter-container">
+
+                    <div class="filter-heading">
+
+                        <div>
+                            <h3>Dashboard Filters</h3>
+
+                            <p>
+                                View your business performance by date and customer type.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="dateFilter">Date Range</label>
+
+                            <select id="dateFilter">
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+
+                        </div>
+
+                        <div class="filter-group">
+
+                            <label for="customerFilter">Customer Type</label>
+
+                            <select id="customerFilter">
+                                <option value="all">All Customers</option>
+                                <option value="Senior/PWD">Senior/PWD</option>
+                                <option value="Student">Student</option>
+                                <option value="General Customer">General Customer</option>
+                            </select>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            id="filterBtn"
+                            class="filter-button">
+
+                            <i class="fa-solid fa-filter"></i>
+                            Apply Filters
+
+                        </button>
+
+                        <button
+                            type="button"
+                            id="resetBtn"
+                            class="reset-button">
+
+                            <i class="fa-solid fa-rotate-left"></i>
+                            Reset
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <!-- SUMMARY CARDS -->
+                <div class="metrics-grid">
+
+                    <div class="metric-card">
+
+                        <div class="metric-header">
+                            <span class="metric-label">TOTAL REVENUE</span>
+
+                            <div class="metric-icon gold-glow">
+                                <i class="fa-solid fa-peso-sign"></i>
+                            </div>
+                        </div>
+
+                        <div class="metric-body">
+
+                            <h2 class="metric-value" id="totalRevenueValue">
+                                ₱0.00
+                            </h2>
+
+                            <span class="metric-subtext">
+                                Based on selected filters
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="metric-card">
+
+                        <div class="metric-header">
+                            <span class="metric-label">TRANSACTIONS</span>
+
+                            <div class="metric-icon blue-glow">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                        </div>
+
+                        <div class="metric-body">
+
+                            <h2 class="metric-value" id="totalTransactionsValue">
+                                0
+                            </h2>
+
+                            <span class="metric-subtext">
+                                Total recorded transactions
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="metric-card">
+
+                        <div class="metric-header">
+                            <span class="metric-label">AVERAGE ORDER VALUE</span>
+
+                            <div class="metric-icon purple-glow">
+                                <i class="fa-solid fa-calculator"></i>
+                            </div>
+                        </div>
+
+                        <div class="metric-body">
+
+                            <h2 class="metric-value" id="averageOrderValue">
+                                ₱0.00
+                            </h2>
+
+                            <span class="metric-subtext">
+                                Average spending per transaction
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="metric-card">
+
+                        <div class="metric-header">
+                            <span class="metric-label">TOTAL ITEMS SOLD</span>
+
+                            <div class="metric-icon orange-glow">
+                                <i class="fa-solid fa-mug-hot"></i>
+                            </div>
+                        </div>
+
+                        <div class="metric-body">
+
+                            <h2 class="metric-value" id="totalItemsSoldValue">
+                                0
+                            </h2>
+
+                            <span class="metric-subtext">
+                                Total product units sold
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- SALES OVERVIEW -->
+                <div class="section-heading">
+
+                    <div>
+                        <h2>Sales Overview</h2>
+                        <p>A quick look at your café's sales performance.</p>
+                    </div>
+
+                </div>
+
+                <div class="analytics-layout">
+
+                    <div class="content-card chart-main-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <h3>Hourly Sales Distribution</h3>
+                                <p>Revenue distribution throughout operating hours</p>
+                            </div>
+
+                            <div class="card-badge">Live Data</div>
+
+                        </div>
+
+                        <div class="chart-container-lg">
+                            <canvas id="hourlySalesChart"></canvas>
+                        </div>
+
+                    </div>
+
+                    <div class="content-card chart-side-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <h3>Payment Channels</h3>
+                                <p>Net sales by payment method</p>
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container-sm">
+                            <canvas id="paymentMethodsChart"></canvas>
+                        </div>
+
+                    </div>
+
+                    <div class="content-card chart-side-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <h3>Customer Type Distribution</h3>
+                                <p>Transactions associated with each customer type</p>
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container-sm">
+                            <canvas id="customerTypesChart"></canvas>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- BUSINESS AT A GLANCE -->
+                <div class="section-heading">
+
+                    <div>
+                        <h2>Business at a Glance</h2>
+                        <p>Important business highlights in one place.</p>
+                    </div>
+
+                </div>
+
+                <div class="glance-grid">
+
+                    <div class="content-card glance-card">
+
+                        <div class="glance-icon">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+
+                        <div class="glance-info">
+
+                            <span>Best-Selling Product</span>
+                            <h3 id="glanceTopProduct">N/A</h3>
+                            <p id="glanceTopProductCount">0 units sold</p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="content-card glance-card">
+
+                        <div class="glance-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+
+                        <div class="glance-info">
+
+                            <span>Most Common Customer</span>
+                            <h3 id="glanceTopCustomer">N/A</h3>
+                            <p id="glanceTopCustomerCount">0 transactions</p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="content-card glance-card">
+
+                        <div class="glance-icon">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+
+                        <div class="glance-info">
+
+                            <span>Most Used Payment</span>
+                            <h3 id="glanceTopPayment">N/A</h3>
+                            <p id="glanceTopPaymentCount">0 transactions</p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="content-card glance-card">
+
+                        <div class="glance-icon">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+
+                        <div class="glance-info">
+
+                            <span>Peak Business Hour</span>
+                            <h3 id="glancePeakHour">N/A</h3>
+                            <p>Highest transaction volume</p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- RECENT TRANSACTIONS -->
+                <div class="section-heading">
+
+                    <div>
+                        <h2>Recent Transactions</h2>
+                        <p>A quick view of the latest recorded customer orders.</p>
+                    </div>
+
+                    <span class="section-note">Latest 5 transactions</span>
+
+                </div>
+
+                <div class="content-card table-card">
+
+                    <div class="table-responsive">
+
+                        <table class="overview-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Receipt No.</th>
+                                    <th>Date & Time</th>
+                                    <th>Customer Type</th>
+                                    <th>Payment Method</th>
+                                    <th>Total Amount</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="recentTransactionsBody">
+
+                                <tr>
+                                    <td colspan="5" class="empty-table-message">
+                                        No transactions available.
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <!-- BUSINESS ALERTS -->
+                <div class="section-heading">
+
+                    <div>
+                        <h2>Business Alerts</h2>
+                        <p>Important reminders that may require your attention.</p>
+                    </div>
+
+                </div>
+
+                <div class="content-card alerts-card">
+
+                    <div id="businessAlertsList" class="business-alerts-list">
+
+                        <div class="alert-item">
+
+                            <div class="alert-icon">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </div>
+
+                            <div class="alert-content">
+
+                                <h4>No alerts to display</h4>
+
+                                <p>
+                                    Business notifications will appear here when available.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- FOOTER -->
+            <footer class="main-footer">
+                CaféSense Sales and Customer Behavior Analytics System
+            </footer>
+
+        </div>
+
+    </main>
+
+</div>
+
+    <!-- JAVASCRIPT -->
+    <script src="./dashboard.js" defer></script>
+
+</body>
+</html>

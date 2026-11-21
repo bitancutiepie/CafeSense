@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CaféSense | Inventory & Menu</title>
+
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="products.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- SIDEBAR HEADER -->
+        <div class="sidebar-header">
+
+            <div class="brand-logo">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+
+            <div class="brand-title">
+                <h2>CaféSense</h2>
+                <span class="role-badge">Owner Portal</span>
+            </div>
+
+            <!-- DESKTOP SIDEBAR TOGGLE -->
+            <button
+                type="button"
+                class="sidebar-toggle-btn sidebar-header-toggle"
+                id="sidebarToggle"
+                title="Collapse or Expand Sidebar"
+                aria-label="Toggle Sidebar"
+                aria-controls="sidebar"
+                aria-expanded="true">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+            <!-- MOBILE SIDEBAR CLOSE BUTTON -->
+            <button
+                type="button"
+                class="sidebar-close-btn"
+                id="sidebarClose"
+                title="Close Sidebar"
+                aria-label="Close Sidebar">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="sidebar-nav">
+
+            <!-- GENERAL -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">GENERAL</span>
+
+                <a
+                    href="./dashboard.html"
+                    class="nav-item"
+                    title="Dashboard Overview">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    <span class="nav-text">
+                        Dashboard / Overview
+                    </span>
+
+                </a>
+
+            </div>
+
+
+            <!-- OPERATIONS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">OPERATIONS</span>
+
+                <a
+                    href="./transactions.html"
+                    class="nav-item"
+                    title="Transaction POS">
+
+                    <i class="fa-solid fa-cash-register"></i>
+
+                    <span class="nav-text">
+                        Transaction POS
+                    </span>
+
+                </a>
+
+                <a
+                    href="./products.html"
+                    class="nav-item active"
+                    title="Inventory and Menu"
+                    aria-current="page">
+
+                    <i class="fa-solid fa-box-open"></i>
+
+                    <span class="nav-text">
+                        Inventory & Menu
+                    </span>
+
+                </a>
+
+            </div>
+
+
+            <!-- ANALYTICS & INSIGHTS -->
+            <div class="nav-section analytics-nav-section">
+
+                <button
+                    type="button"
+                    class="nav-item analytics-dropdown-toggle"
+                    id="analyticsDropdownToggle"
+                    title="Analytics and Insights"
+                    aria-label="Analytics and Insights"
+                    aria-expanded="false"
+                    aria-controls="analyticsNavList">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span class="nav-text">
+                        Analytics & Insights
+                    </span>
+
+                    <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+
+                </button>
+
+
+                <!-- ANALYTICS SUBMENU -->
+                <div
+                    class="analytics-nav-list collapsed"
+                    id="analyticsNavList">
+
+                    <a
+                        href="./analytics.html#sales-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Sales Analytics">
+
+                        <i class="fa-solid fa-chart-column"></i>
+
+                        <span class="nav-text">
+                            Sales Analytics
+                        </span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#payment-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Payment Analytics">
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                        <span class="nav-text">
+                            Payment Analytics
+                        </span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#customer-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Customer Analytics">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        <span class="nav-text">
+                            Customer Analytics
+                        </span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#product-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Product Analytics">
+
+                        <i class="fa-solid fa-box"></i>
+
+                        <span class="nav-text">
+                            Product Analytics
+                        </span>
+
+                    </a>
+
+                    <a
+                        href="./analytics.html#peak-hours-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Peak Hours Analytics">
+
+                        <i class="fa-solid fa-clock"></i>
+
+                        <span class="nav-text">
+                            Peak Hours Analytics
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- REPORTS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">REPORTS</span>
+
+                <a
+                    href="./reports.html"
+                    class="nav-item"
+                    title="Sales Reports">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                    <span class="nav-text">
+                        Sales Reports
+                    </span>
+
+                </a>
+
+            </div>
+
+
+            <!-- ADMINISTRATION -->
+            <div class="nav-section owner-only">
+
+                <span class="nav-section-label">
+                    ADMINISTRATION
+                </span>
+
+                <a
+                    href="./users.html"
+                    class="nav-item"
+                    title="User Management">
+
+                    <i class="fa-solid fa-user-gear"></i>
+
+                    <span class="nav-text">
+                        User Management
+                    </span>
+
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-footer">
+
+            <div class="user-profile-card">
+
+                <div class="user-avatar-placeholder">
+                    MS
+                </div>
+
+                <div class="user-info">
+
+                    <span id="display-user-name" class="user-name">
+                        Maria Santos
+                    </span>
+
+                    <span class="user-role">
+                        Lead Administrator
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="logout-btn"
+                    class="logout-btn"
+                    title="Sign Out"
+                    aria-label="Sign Out">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                </button>
+
+            </div>
+
+            <p class="sidebar-copyright">
+                © 2026 CaféSense
+            </p>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP HEADER -->
+                <!-- TOP HEADER -->
+        <header class="top-header">
+
+            <div class="header-left">
+
+                <!-- MOBILE SIDEBAR TOGGLE -->
+                <button
+                    type="button"
+                    class="sidebar-toggle-btn mobile-sidebar-toggle"
+                    id="mobileSidebarToggle"
+                    title="Open Navigation"
+                    aria-label="Open navigation"
+                    aria-controls="sidebar"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div class="page-heading">
+
+                    <h1>Inventory & Menu</h1>
+
+                    <p>
+                        Manage your café products and monitor inventory.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="date-badge">
+
+                    <div class="date-row">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="current-date"></span>
+                    </div>
+
+                    <div class="time-row">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="current-time"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <section class="page-content">
+
+            <!-- PAGE INTRODUCTION -->
+            <div class="content-intro">
+
+                <div>
+
+                    <h2>Product Inventory</h2>
+
+                    <p>
+                        Keep track of your products, prices, and available stock.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="primary-btn"
+                    id="addProductBtn">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Add New Product
+
+                </button>
+
+            </div>
+
+
+            <!-- INVENTORY SUMMARY CARDS -->
+            <div class="inventory-summary">
+
+                <!-- TOTAL PRODUCTS -->
+                <div class="summary-card">
+
+                    <div class="summary-icon total-icon">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+
+                    <div class="summary-info">
+
+                        <span>Total Products</span>
+
+                        <h3 id="totalProducts">0</h3>
+
+                        <small>Registered products</small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- IN STOCK -->
+                <div class="summary-card">
+
+                    <div class="summary-icon instock-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+
+                    <div class="summary-info">
+
+                        <span>In Stock</span>
+
+                        <h3 id="inStockProducts">0</h3>
+
+                        <small>Available products</small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- LOW STOCK -->
+                <div class="summary-card">
+
+                    <div class="summary-icon lowstock-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+
+                    <div class="summary-info">
+
+                        <span>Low Stock</span>
+
+                        <h3 id="lowStockProducts">0</h3>
+
+                        <small>Products needing restock</small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- OUT OF STOCK -->
+                <div class="summary-card">
+
+                    <div class="summary-icon outstock-icon">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+
+                    <div class="summary-info">
+
+                        <span>Out of Stock</span>
+
+                        <h3 id="outOfStockProducts">0</h3>
+
+                        <small>Unavailable products</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT MANAGEMENT SECTION -->
+            <div class="inventory-section">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>Product List</h2>
+
+                        <p>
+                            View and manage all registered café products.
+                        </p>
+
+                    </div>
+
+                    <span class="product-count">
+                        <span id="displayProductCount">0</span> Products
+                    </span>
+
+                </div>
+
+
+                <!-- SEARCH AND FILTERS -->
+                <div class="inventory-toolbar">
+
+                    <!-- SEARCH BAR -->
+                    <div class="search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            type="text"
+                            id="productSearch"
+                            placeholder="Search product name or ID..."
+                            autocomplete="off"
+                            aria-label="Search products">
+
+                        <button
+                            type="button"
+                            id="clearSearchBtn"
+                            class="clear-search-btn"
+                            title="Clear Search"
+                            aria-label="Clear Search">
+
+                            <i class="fa-solid fa-xmark"></i>
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- CATEGORY FILTER -->
+                    <div class="filter-group">
+
+                        <label for="categoryFilter">
+                            Category
+                        </label>
+
+                        <select id="categoryFilter">
+
+                            <option value="all">All Categories</option>
+                            <option value="Coffee">Coffee</option>
+                            <option value="Non-Coffee">Non-Coffee</option>
+                            <option value="Pastry / Baked Good">Pastry / Baked Good</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- STOCK FILTER -->
+                    <div class="filter-group">
+
+                        <label for="stockFilter">
+                            Stock Status
+                        </label>
+
+                        <select id="stockFilter">
+
+                            <option value="all">All Status</option>
+                            <option value="In Stock">In Stock</option>
+                            <option value="Low Stock">Low Stock</option>
+                            <option value="Out of Stock">Out of Stock</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PRODUCT TABLE -->
+                <div class="table-container">
+
+                    <table class="product-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Product ID</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="productTableBody">
+
+                            <!-- PRODUCT ROWS WILL BE GENERATED USING JAVASCRIPT -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- EMPTY INVENTORY MESSAGE -->
+                    <div
+                        class="empty-inventory"
+                        id="emptyInventory"
+                        role="status"
+                        aria-live="polite">
+
+                        <i class="fa-solid fa-box-open"></i>
+
+                        <h3>No Products Found</h3>
+
+                        <p>
+                            No products match your search or filter.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ===================================================== -->
+    <!-- ADD / EDIT PRODUCT MODAL -->
+    <!-- ===================================================== -->
+
+    <div
+        class="modal-overlay"
+        id="productModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle">
+
+        <div class="modal-container">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2 id="modalTitle">Add New Product</h2>
+
+                    <p>Enter the product information below.</p>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT FORM -->
+            <form id="productForm">
+
+                <input type="hidden" id="editProductId">
+
+
+                <!-- PRODUCT NAME -->
+                <div class="form-group">
+
+                    <label for="productName">Product Name</label>
+
+                    <input
+                        type="text"
+                        id="productName"
+                        placeholder="Enter product name"
+                        maxlength="100"
+                        required>
+
+                </div>
+
+
+                <!-- CATEGORY -->
+                <div class="form-group">
+
+                    <label for="productCategory">Category</label>
+
+                    <select id="productCategory" required>
+
+                        <option value="">Select Category</option>
+                        <option value="Coffee">Coffee</option>
+                        <option value="Non-Coffee">Non-Coffee</option>
+                        <option value="Pastry / Baked Good">Pastry / Baked Good</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- PRICE -->
+                <div class="form-group">
+
+                    <label for="productPrice">Price (₱)</label>
+
+                    <input
+                        type="number"
+                        id="productPrice"
+                        placeholder="Enter product price"
+                        min="0.01"
+                        step="0.01"
+                        required>
+
+                </div>
+
+
+                <!-- STOCK -->
+                <div class="form-group">
+
+                    <label for="productStock">Initial Stock Quantity</label>
+
+                    <input
+                        type="number"
+                        id="productStock"
+                        placeholder="Enter stock quantity"
+                        min="0"
+                        step="1"
+                        required>
+
+                </div>
+
+
+                <!-- MODAL ACTIONS -->
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-btn"
+                        id="cancelProductBtn">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-btn">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Save Product
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STOCK ADJUSTMENT MODAL -->
+    <!-- ===================================================== -->
+
+    <div
+        class="modal-overlay"
+        id="stockModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stockModalTitle">
+
+        <div class="modal-container">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2 id="stockModalTitle">Stock Adjustment</h2>
+
+                    <p>Update the available product quantity.</p>
+
+                </div>
+
+            </div>
+
+
+            <!-- STOCK FORM -->
+            <form id="stockForm">
+
+                <input type="hidden" id="stockProductId">
+
+
+                <!-- PRODUCT NAME -->
+                <div class="form-group">
+
+                    <label for="stockProductName">Product Name</label>
+
+                    <input
+                        type="text"
+                        id="stockProductName"
+                        readonly>
+
+                </div>
+
+
+                <!-- CURRENT STOCK -->
+                <div class="form-group">
+
+                    <label for="currentStockValue">Current Stock</label>
+
+                    <input
+                        type="text"
+                        id="currentStockValue"
+                        readonly>
+
+                </div>
+
+
+                <!-- STOCK ACTION -->
+                <div class="form-group">
+
+                    <label for="stockAction">Adjustment Type</label>
+
+                    <select id="stockAction" required>
+
+                        <option value="add">Add Stock</option>
+                        <option value="remove">Remove Stock</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- QUANTITY -->
+                <div class="form-group">
+
+                    <label for="stockQuantity">Quantity</label>
+
+                    <input
+                        type="number"
+                        id="stockQuantity"
+                        placeholder="Enter quantity"
+                        min="1"
+                        step="1"
+                        required>
+
+                </div>
+
+
+                <!-- REASON -->
+                <div class="form-group">
+
+                    <label for="stockReason">Reason</label>
+
+                    <select id="stockReason" required>
+
+                        <option value="">Select Reason</option>
+                        <option value="Restock">Restock</option>
+                        <option value="New Delivery">New Delivery</option>
+                        <option value="Damaged Products">Damaged Products</option>
+                        <option value="Expired Products">Expired Products</option>
+                        <option value="Inventory Correction">Inventory Correction</option>
+                        <option value="Other">Other</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- MODAL ACTIONS -->
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-btn"
+                        id="cancelStockBtn">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-btn">
+
+                        <i class="fa-solid fa-check"></i>
+                        Update Stock
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="products.js"></script>
+
+</body>
+
+</html>

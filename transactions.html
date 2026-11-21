@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CaféSense | Transaction POS</title>
+
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- TRANSACTION CSS -->
+    <link rel="stylesheet" href="./transactions.css">
+
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- SIDEBAR HEADER -->
+        <div class="sidebar-header">
+
+            <div class="brand-logo">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+
+            <div class="brand-title">
+                <h2>CaféSense</h2>
+                <span class="role-badge">Owner Portal</span>
+            </div>
+
+            <!-- DESKTOP SIDEBAR TOGGLE -->
+            <button
+                type="button"
+                class="sidebar-toggle-btn sidebar-header-toggle"
+                id="sidebarToggle"
+                title="Collapse Sidebar"
+                aria-label="Toggle Sidebar"
+                aria-controls="sidebar"
+                aria-expanded="true">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+            <!-- MOBILE SIDEBAR CLOSE -->
+            <button
+                type="button"
+                class="sidebar-close-btn"
+                id="sidebarClose"
+                title="Close Sidebar"
+                aria-label="Close Sidebar">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="sidebar-nav">
+
+            <!-- GENERAL -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">GENERAL</span>
+
+                <a
+                    href="./dashboard.html"
+                    class="nav-item"
+                    title="Dashboard / Overview"
+                    aria-label="Dashboard / Overview">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    <span class="nav-text">Dashboard / Overview</span>
+
+                </a>
+
+            </div>
+
+
+            <!-- OPERATIONS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">OPERATIONS</span>
+
+                <a
+                    href="./transactions.html"
+                    class="nav-item active"
+                    title="Transaction POS"
+                    aria-label="Transaction POS"
+                    aria-current="page">
+
+                    <i class="fa-solid fa-cash-register"></i>
+
+                    <span class="nav-text">Transaction POS</span>
+
+                </a>
+
+
+                <a
+                    href="./products.html"
+                    class="nav-item"
+                    title="Inventory & Menu"
+                    aria-label="Inventory & Menu">
+
+                    <i class="fa-solid fa-box-open"></i>
+
+                    <span class="nav-text">Inventory & Menu</span>
+
+                </a>
+
+            </div>
+
+
+            <!-- ANALYTICS & INSIGHTS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">ANALYTICS & INSIGHTS</span>
+
+                <button
+                    type="button"
+                    class="nav-item analytics-dropdown-toggle"
+                    id="analyticsDropdownToggle"
+                    aria-expanded="false"
+                    aria-controls="analyticsNavList">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span class="nav-text">Analytics & Insights</span>
+
+                    <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+
+                </button>
+
+
+                <!-- ANALYTICS SUBMENU -->
+                <div
+                    class="analytics-nav-list collapsed"
+                    id="analyticsNavList">
+
+                    <a
+                        href="./analytics.html#sales-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Sales Analytics">
+
+                        <i class="fa-solid fa-chart-column"></i>
+
+                        <span class="nav-text">Sales Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="./analytics.html#payment-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Payment Analytics">
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                        <span class="nav-text">Payment Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="./analytics.html#customer-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Customer Analytics">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        <span class="nav-text">Customer Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="./analytics.html#product-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Product Analytics">
+
+                        <i class="fa-solid fa-box"></i>
+
+                        <span class="nav-text">Product Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="./analytics.html#peak-hours-analytics"
+                        class="nav-item analytics-nav-item"
+                        title="Peak Hours Analytics">
+
+                        <i class="fa-solid fa-clock"></i>
+
+                        <span class="nav-text">Peak Hours Analytics</span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- REPORTS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">REPORTS</span>
+
+                <a
+                    href="./reports.html"
+                    class="nav-item"
+                    title="Sales Reports"
+                    aria-label="Sales Reports">
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                    <span class="nav-text">Sales Reports</span>
+
+                </a>
+
+            </div>
+
+
+            <!-- ADMINISTRATION -->
+            <div class="nav-section owner-only">
+
+                <span class="nav-section-label">ADMINISTRATION</span>
+
+                <a
+                    href="./users.html"
+                    class="nav-item"
+                    title="User Management"
+                    aria-label="User Management">
+
+                    <i class="fa-solid fa-user-gear"></i>
+
+                    <span class="nav-text">User Management</span>
+
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-footer">
+
+            <div class="user-profile-card">
+
+                <div class="user-avatar-placeholder">
+                    MS
+                </div>
+
+                <div class="user-info">
+
+                    <span class="user-name" id="display-user-name">
+                        Maria Santos
+                    </span>
+
+                    <span class="user-role">
+                        Lead Administrator
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="logout-btn"
+                    id="logout-btn"
+                    title="Sign Out"
+                    aria-label="Sign Out">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="sidebar-copyright">
+                © 2026 CaféSense
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+
+        <!-- TOP HEADER -->
+        <header class="top-header">
+
+            <div class="header-left-group">
+
+                <!-- MOBILE SIDEBAR TOGGLE -->
+                <button
+                    type="button"
+                    class="sidebar-toggle-btn mobile-sidebar-toggle"
+                    id="mobileSidebarToggle"
+                    title="Open Sidebar"
+                    aria-label="Open Sidebar"
+                    aria-controls="sidebar"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div class="header-greeting">
+
+                    <h1>Transaction POS</h1>
+
+                    <p>
+                        Process customer orders and record café transactions.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="header-actions">
+
+                <div class="date-badge">
+
+                    <div class="date-row">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="current-date"></span>
+                    </div>
+
+                    <div class="time-row">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="current-time"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- TRANSACTION WORKSPACE -->
+        <section class="pos-workspace">
+
+
+            <!-- PAGE INTRODUCTION -->
+            <div class="pos-page-heading">
+
+                <div>
+                    <h2>New Transaction</h2>
+                    <p>Select products and add them to the customer's order.</p>
+                </div>
+
+            </div>
+
+
+            <!-- POS MAIN LAYOUT -->
+            <div class="pos-layout">
+
+
+                <!-- PRODUCT CATALOG -->
+                <section class="product-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <h3>Product Catalog</h3>
+                            <p>Choose products to add to the order.</p>
+                        </div>
+
+                        <span class="product-count" id="productCount">
+                            0 Products
+                        </span>
+
+                    </div>
+
+
+                    <!-- SEARCH -->
+                    <div class="product-search-wrapper">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            type="search"
+                            id="productSearch"
+                            placeholder="Search products..."
+                            autocomplete="off"
+                            aria-label="Search products">
+
+                    </div>
+
+
+                    <!-- CATEGORY FILTERS -->
+                    <div class="category-filters" id="categoryFilters">
+
+                        <button
+                            class="category-btn active"
+                            type="button"
+                            data-category="All">
+
+                            All Products
+
+                        </button>
+
+                        <button
+                            class="category-btn"
+                            type="button"
+                            data-category="Coffee">
+
+                            Coffee
+
+                        </button>
+
+                        <button
+                            class="category-btn"
+                            type="button"
+                            data-category="Non-Coffee">
+
+                            Non-Coffee
+
+                        </button>
+
+                        <button
+                            class="category-btn"
+                            type="button"
+                            data-category="Pastry / Baked Good">
+
+                            Pastry / Baked Good
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- PRODUCT GRID -->
+                    <div class="product-grid" id="productGrid">
+
+                        <div class="product-loading">
+                            Loading products...
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- CURRENT ORDER -->
+                <aside class="order-panel">
+
+                    <div class="order-header">
+
+                        <div>
+                            <h3>Current Order</h3>
+                            <p>Review selected products.</p>
+                        </div>
+
+                        <div class="cart-count" id="cartCount">0</div>
+
+                    </div>
+
+
+                    <!-- CART ITEMS -->
+                    <div class="cart-items" id="cartItems">
+
+                        <div class="empty-cart">
+
+                            <div class="empty-cart-icon">
+                                <i class="fa-solid fa-basket-shopping"></i>
+                            </div>
+
+                            <h4>Your cart is empty</h4>
+
+                            <p>
+                                Select products from the catalog to start an order.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ORDER SUMMARY -->
+                    <div class="order-summary">
+
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <strong id="subtotalValue">₱0.00</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Discount</span>
+                            <strong id="discountValue">₱0.00</strong>
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-row total-row">
+                            <span>Total Amount</span>
+                            <strong id="totalValue">₱0.00</strong>
+                        </div>
+
+                    </div>
+
+
+                    <!-- CUSTOMER DETAILS -->
+                    <div class="checkout-section">
+
+                        <h4>Customer Details</h4>
+
+                        <div class="checkout-field">
+
+                            <label for="customerCount">
+                                Number of Customers
+                            </label>
+
+                            <input
+                                type="number"
+                                id="customerCount"
+                                name="customerCount"
+                                value="1"
+                                min="1"
+                                step="1"
+                                required
+                                placeholder="Enter number of customers">
+
+                        </div>
+
+                        <p class="customer-count-note">
+                            Enter the total number of people included in this transaction.
+                        </p>
+
+                    </div>
+
+
+                    <!-- PAYMENT DETAILS -->
+                    <div class="checkout-section">
+
+                        <h4>Payment Details</h4>
+
+                        <div class="checkout-field">
+
+                            <label for="paymentMethod">Payment Method</label>
+
+                            <select id="paymentMethod">
+
+                                <option value="Cash">Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Maya">Maya</option>
+                                <option value="Card">Card</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- CASH PAYMENT -->
+                        <div class="checkout-field" id="cashPaymentGroup">
+
+                            <label for="cashReceived">Cash Received</label>
+
+                            <input
+                                type="number"
+                                id="cashReceived"
+                                placeholder="Enter amount received"
+                                min="0"
+                                step="0.01">
+
+                        </div>
+
+
+                        <!-- CHANGE -->
+                        <div class="change-row" id="changeRow">
+
+                            <span>Change</span>
+
+                            <strong id="changeDue">₱0.00</strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CHECKOUT ACTIONS -->
+                    <div class="checkout-actions">
+
+                        <button
+                            type="button"
+                            class="clear-cart-btn"
+                            id="clearCartBtn">
+
+                            <i class="fa-solid fa-trash-can"></i>
+
+                            Clear Order
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="checkout-btn"
+                            id="checkoutBtn"
+                            disabled>
+
+                            <i class="fa-solid fa-check"></i>
+
+                            Complete Transaction
+
+                        </button>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+
+        <!-- RECEIPT MODAL -->
+        <div
+            class="receipt-modal"
+            id="receiptModal"
+            aria-hidden="true">
+
+            <div class="receipt-modal-content">
+
+                <div class="receipt-header">
+
+                    <div class="receipt-success-icon">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+
+                    <h2>Transaction Completed!</h2>
+
+                    <p>Your order has been recorded successfully.</p>
+
+                </div>
+
+
+                <div class="receipt-content" id="receiptContent">
+                    <!-- Receipt details generated by JavaScript. -->
+                </div>
+
+
+                <div class="receipt-actions">
+
+                    <button
+                        type="button"
+                        class="receipt-print-btn"
+                        id="printReceiptBtn">
+
+                        <i class="fa-solid fa-print"></i>
+
+                        Print Receipt
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="receipt-close-btn"
+                        id="closeReceiptBtn">
+
+                        Done
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+
+            CaféSense Sales and Customer Behavior Analytics System
+
+        </footer>
+
+    </main>
+
+</div>
+
+    <!-- TRANSACTION JAVASCRIPT -->
+    <script src="./transactions.js" defer></script>
+
+</body>
+</html>

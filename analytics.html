@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CaféSense | Analytics & Insights</title>
+
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- CHART.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="./analytics.css">
+
+</head>
+
+<body class="analytics-body">
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- SIDEBAR HEADER -->
+        <div class="sidebar-header">
+
+            <div class="brand-logo">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+
+            <div class="brand-title">
+                <h2>CaféSense</h2>
+                <span class="role-badge">Owner Portal</span>
+            </div>
+
+            <!-- DESKTOP SIDEBAR TOGGLE -->
+            <button
+                type="button"
+                class="sidebar-toggle-btn sidebar-header-toggle"
+                id="sidebarToggle"
+                title="Collapse Sidebar"
+                aria-label="Collapse sidebar"
+                aria-controls="sidebar"
+                aria-expanded="true">
+
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <!-- MOBILE SIDEBAR CLOSE -->
+            <button
+                type="button"
+                class="sidebar-close-btn"
+                id="sidebarClose"
+                title="Close Navigation"
+                aria-label="Close navigation">
+
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="sidebar-nav">
+
+            <!-- GENERAL -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">GENERAL</span>
+
+                <a href="./dashboard.html" class="nav-item">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="nav-text">Dashboard / Overview</span>
+                </a>
+
+            </div>
+
+
+            <!-- OPERATIONS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">OPERATIONS</span>
+
+                <a href="./transactions.html" class="nav-item">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span class="nav-text">Transaction POS</span>
+                </a>
+
+                <a href="./products.html" class="nav-item">
+                    <i class="fa-solid fa-box-open"></i>
+                    <span class="nav-text">Inventory & Menu</span>
+                </a>
+
+            </div>
+
+
+            <!-- ANALYTICS & INSIGHTS -->
+            <div class="nav-section analytics-nav-section">
+
+                <span class="nav-section-label">ANALYTICS & INSIGHTS</span>
+
+                <button
+                    type="button"
+                    class="nav-item analytics-dropdown-toggle"
+                    id="analyticsDropdownToggle"
+                    aria-expanded="true"
+                    aria-controls="analyticsNavList">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span class="nav-text">Analytics & Insights</span>
+
+                    <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+
+                </button>
+
+
+                <!-- ANALYTICS SUBMENU -->
+                <div class="analytics-nav-list" id="analyticsNavList">
+
+                    <a
+                        href="#sales-analytics"
+                        class="nav-item analytics-nav-item active"
+                        data-section="sales-analytics">
+
+                        <i class="fa-solid fa-chart-column"></i>
+                        <span class="nav-text">Sales Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="#payment-analytics"
+                        class="nav-item analytics-nav-item"
+                        data-section="payment-analytics">
+
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="nav-text">Payment Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="#customer-analytics"
+                        class="nav-item analytics-nav-item"
+                        data-section="customer-analytics">
+
+                        <i class="fa-solid fa-users"></i>
+                        <span class="nav-text">Customer Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="#product-analytics"
+                        class="nav-item analytics-nav-item"
+                        data-section="product-analytics">
+
+                        <i class="fa-solid fa-box"></i>
+                        <span class="nav-text">Product Analytics</span>
+
+                    </a>
+
+
+                    <a
+                        href="#peak-hours-analytics"
+                        class="nav-item analytics-nav-item"
+                        data-section="peak-hours-analytics">
+
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="nav-text">Peak Hours Analytics</span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- REPORTS -->
+            <div class="nav-section">
+
+                <span class="nav-section-label">REPORTS</span>
+
+                <a href="./reports.html" class="nav-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span class="nav-text">Sales Reports</span>
+                </a>
+
+            </div>
+
+
+            <!-- ADMINISTRATION -->
+            <div class="nav-section owner-only">
+
+                <span class="nav-section-label">ADMINISTRATION</span>
+
+                <a href="./users.html" class="nav-item">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span class="nav-text">User Management</span>
+                </a>
+
+            </div>
+
+        </nav>
+
+
+        <!-- SIDEBAR FOOTER -->
+        <div class="sidebar-footer">
+
+            <div class="user-profile-card">
+
+                <div class="user-avatar-placeholder">MS</div>
+
+                <div class="user-info">
+
+                    <span id="display-user-name" class="user-name">
+                        Maria Santos
+                    </span>
+
+                    <span class="user-role">
+                        Lead Administrator
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="logout-btn"
+                    class="logout-btn"
+                    title="Sign Out"
+                    aria-label="Sign Out">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                </button>
+
+            </div>
+
+            <p class="sidebar-copyright">
+                © 2026 CaféSense
+            </p>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+
+        <!-- TOP HEADER -->
+        <header class="top-header">
+
+            <div class="header-left-group">
+
+                <!-- MOBILE SIDEBAR TOGGLE -->
+                <button
+                    type="button"
+                    class="sidebar-toggle-btn mobile-sidebar-toggle"
+                    id="mobileSidebarToggle"
+                    title="Open Navigation"
+                    aria-label="Open navigation"
+                    aria-controls="sidebar"
+                    aria-expanded="false">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+
+                <div class="header-greeting">
+
+                    <h1>Analytics & Insights</h1>
+
+                    <p>
+                        Explore your café's performance and discover useful business patterns.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <div class="date-badge">
+
+                    <div class="date-row">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="current-date"></span>
+                    </div>
+
+                    <div class="time-row">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="current-time"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- SCROLLABLE PAGE CONTENT -->
+        <div class="analytics-page-content">
+
+            <!-- =====================================================
+                 1. SALES ANALYTICS
+            ====================================================== -->
+            <section class="analytics-section" id="sales-analytics">
+
+            <!-- PAGE INTRODUCTION -->
+            <div class="page-intro">
+
+                <span class="eyebrow">BUSINESS INTELLIGENCE</span>
+
+                <h2>Understand Your Café Better</h2>
+
+                <p>
+                    Analyze sales performance, customer purchasing patterns,
+                    products, and business activity.
+                </p>
+
+            </div>
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">01 / SALES</span>
+
+                        <h2>Sales Analytics</h2>
+
+                        <p>
+                            Examine revenue performance and changes over time.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SALES FILTERS -->
+                    <div class="filter-container">
+
+                        <div class="filter-heading">
+
+                            <h3>Sales Filters</h3>
+
+                            <p>
+                                Choose the period of sales you want to view and how the results are grouped.
+                            </p>
+
+                        </div>
+
+
+                        <div class="filter-controls">
+
+                            <div class="filter-group">
+
+                                <label for="salesDateFilter">Show Sales For</label>
+
+                                <select id="salesDateFilter">
+
+                                    <option value="all">All Dates</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="filter-group">
+
+                                <label for="salesGroupBy">Display Trend By</label>
+
+                                <select id="salesGroupBy">
+
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+
+                                </select>
+
+                            </div>
+
+
+                            <button type="button" class="apply-button" id="applySalesFilter">
+
+                                <i class="fa-solid fa-filter"></i> Apply
+
+                            </button>
+
+
+                            <button type="button" class="reset-button" id="resetSalesFilter">
+
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+
+                            </button>
+
+                        </div>
+
+
+                        <p class="filter-result" id="salesFilterResult">
+                            Showing all recorded sales.
+                        </p>
+
+                    </div>
+
+
+                <!-- SALES CHARTS -->
+                <div class="analytics-grid">
+
+                    <div class="content-card chart-wide">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Sales Trend</h3>
+
+                                <p>
+                                    Net sales based on the selected grouping.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container">
+
+                            <canvas id="salesTrendChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Sales Performance</h3>
+
+                                <p>
+                                    Sales and discount summary.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="performance-list">
+
+                            <div class="performance-row">
+
+                                <span>Gross Subtotal</span>
+
+                                <strong id="salesGrossSubtotal">₱0.00</strong>
+
+                            </div>
+
+
+                            <div class="performance-row">
+
+                                <span>Total Discounts</span>
+
+                                <strong id="salesTotalDiscount">₱0.00</strong>
+
+                            </div>
+
+
+                            <div class="performance-row">
+
+                                <span>Net Sales</span>
+
+                                <strong id="salesNetTotal">₱0.00</strong>
+
+                            </div>
+
+
+                            <div class="performance-row">
+
+                                <span>Average Transaction</span>
+
+                                <strong id="salesAverageOrder">₱0.00</strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SALES INSIGHT -->
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <div>
+
+                        <span>SALES INSIGHT</span>
+
+                        <h3 id="salesInsightTitle">
+                            Waiting for transaction data
+                        </h3>
+
+                        <p id="salesInsightText">
+                            Sales insights will appear when transaction records are available.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 2. PAYMENT ANALYTICS
+            ====================================================== -->
+            <section class="analytics-section" id="payment-analytics">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">02 / PAYMENTS</span>
+
+                        <h2>Payment Analytics</h2>
+
+                        <p>
+                            Understand how customers settle their purchases.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PAYMENT FILTERS -->
+                <div class="filter-container">
+
+                    <div class="filter-heading">
+
+                        <h3>Payment Filters</h3>
+
+                        <p>
+                            View payment activity within a selected period and method.
+                        </p>
+
+                    </div>
+
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="paymentDateFilter">Date Range</label>
+
+                            <select id="paymentDateFilter">
+
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="paymentMethodFilter">Payment Method</label>
+
+                            <select id="paymentMethodFilter">
+
+                                <option value="all">All Methods</option>
+                                <option value="Cash">Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Maya">Maya</option>
+                                <option value="Card">Card</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button type="button" class="apply-button" id="applyPaymentFilter">
+
+                            <i class="fa-solid fa-filter"></i> Apply
+
+                        </button>
+
+
+                        <button type="button" class="reset-button" id="resetPaymentFilter">
+
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+
+                        </button>
+
+                    </div>
+
+
+                    <p class="filter-result" id="paymentFilterResult">
+                        Showing all payment records.
+                    </p>
+
+                </div>
+
+
+                <!-- PAYMENT CHARTS -->
+                <div class="analytics-grid">
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Payment Method Distribution</h3>
+
+                                <p>
+                                    Share of transactions by payment method.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container chart-container-medium">
+
+                            <canvas id="paymentDistributionChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Payment Breakdown</h3>
+
+                                <p>
+                                    Transaction count and net sales per method.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="analytics-table">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Transactions</th>
+                                        <th>Net Sales</th>
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="paymentBreakdownBody">
+
+                                    <tr>
+                                        <td colspan="3" class="empty-message">
+                                            No payment data available.
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PAYMENT INSIGHT -->
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <div>
+
+                        <span>PAYMENT INSIGHT</span>
+
+                        <h3 id="paymentInsightTitle">
+                            Waiting for transaction data
+                        </h3>
+
+                        <p id="paymentInsightText">
+                            Payment insights will appear when transaction records are available.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 3. CUSTOMER ANALYTICS
+            ====================================================== -->
+            <section class="analytics-section" id="customer-analytics">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">03 / CUSTOMERS</span>
+
+                        <h2>Customer Analytics</h2>
+
+                        <p>
+                            Explore purchasing activity across customer categories.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CUSTOMER FILTERS -->
+                <div class="filter-container">
+
+                    <div class="filter-heading">
+
+                        <h3>Customer Filters</h3>
+
+                        <p>
+                            Focus on a customer category and selected period.
+                        </p>
+
+                    </div>
+
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="customerDateFilter">Date Range</label>
+
+                            <select id="customerDateFilter">
+
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="customerTypeFilter">Customer Type</label>
+
+                            <select id="customerTypeFilter">
+
+                                <option value="all">All Customer Types</option>
+                                <option value="Senior/PWD">Senior/PWD</option>
+                                <option value="Student">Student</option>
+                                <option value="General Customer">General Customer</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button type="button" class="apply-button" id="applyCustomerFilter">
+
+                            <i class="fa-solid fa-filter"></i> Apply
+
+                        </button>
+
+
+                        <button type="button" class="reset-button" id="resetCustomerFilter">
+
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+
+                        </button>
+
+                    </div>
+
+
+                    <p class="filter-result" id="customerFilterResult">
+                        Showing all customer records.
+                    </p>
+
+                </div>
+
+
+                <!-- CUSTOMER CHARTS -->
+                <div class="analytics-grid">
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Customer Type Distribution</h3>
+
+                                <p>
+                                    Product units purchased by customer type.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container chart-container-medium">
+
+                            <canvas id="customerDistributionChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Customer Type Breakdown</h3>
+
+                                <p>
+                                    Units and net sales per category.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="analytics-table">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>Customer Type</th>
+                                        <th>Units</th>
+                                        <th>Net Sales</th>
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="customerBreakdownBody">
+
+                                    <tr>
+                                        <td colspan="3" class="empty-message">
+                                            No customer data available.
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CUSTOMER INSIGHT -->
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <div>
+
+                        <span>CUSTOMER INSIGHT</span>
+
+                        <h3 id="customerInsightTitle">
+                            Waiting for transaction data
+                        </h3>
+
+                        <p id="customerInsightText">
+                            Customer insights will appear when transaction records are available.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 4. PRODUCT ANALYTICS
+            ====================================================== -->
+            <section class="analytics-section" id="product-analytics">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">04 / PRODUCTS</span>
+
+                        <h2>Product Analytics</h2>
+
+                        <p>
+                            Identify popular products and evaluate product performance.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PRODUCT FILTERS -->
+                <div class="filter-container">
+
+                    <div class="filter-heading">
+
+                        <h3>Product Filters</h3>
+
+                        <p>
+                            View product performance by category, product, and period.
+                        </p>
+
+                    </div>
+
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="productDateFilter">Date Range</label>
+
+                            <select id="productDateFilter">
+
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="productCategoryFilter">Product Category</label>
+
+                            <select id="productCategoryFilter">
+
+                                <option value="all">All Categories</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="productFilter">Product</label>
+
+                            <select id="productFilter">
+
+                                <option value="all">All Products</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button type="button" class="apply-button" id="applyProductFilter">
+
+                            <i class="fa-solid fa-filter"></i> Apply
+
+                        </button>
+
+
+                        <button type="button" class="reset-button" id="resetProductFilter">
+
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+
+                        </button>
+
+                    </div>
+
+
+                    <p class="filter-result" id="productFilterResult">
+                        Showing all product records.
+                    </p>
+
+                </div>
+
+
+                <!-- PRODUCT CHARTS -->
+                <div class="analytics-grid">
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Top-Selling Products</h3>
+
+                                <p>
+                                    Products ranked by units sold.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container chart-container-medium">
+
+                            <canvas id="topProductsChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Product Performance</h3>
+
+                                <p>
+                                    Sales quantity and net sales per product.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="analytics-table">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Units Sold</th>
+                                        <th>Net Sales</th>
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="productBreakdownBody">
+
+                                    <tr>
+                                        <td colspan="3" class="empty-message">
+                                            No product data available.
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PRODUCT INSIGHT -->
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <div>
+
+                        <span>PRODUCT INSIGHT</span>
+
+                        <h3 id="productInsightTitle">
+                            Waiting for transaction data
+                        </h3>
+
+                        <p id="productInsightText">
+                            Product insights will appear when transaction records are available.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 5. PEAK HOURS ANALYTICS
+            ====================================================== -->
+            <section class="analytics-section" id="peak-hours-analytics">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-number">05 / BUSINESS HOURS</span>
+
+                        <h2>Peak Hours Analytics</h2>
+
+                        <p>
+                            Discover when your café receives the most orders and sales.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PEAK HOURS FILTERS -->
+                <div class="filter-container">
+
+                    <div class="filter-heading">
+
+                        <h3>Peak Hours Filters</h3>
+
+                        <p>
+                            Compare business activity by date range and day of the week.
+                        </p>
+
+                    </div>
+
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="peakDateFilter">Date Range</label>
+
+                            <select id="peakDateFilter">
+
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="peakDayFilter">Day of Week</label>
+
+                            <select id="peakDayFilter">
+
+                                <option value="all">All Days</option>
+                                <option value="0">Sunday</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button type="button" class="apply-button" id="applyPeakFilter">
+
+                            <i class="fa-solid fa-filter"></i> Apply
+
+                        </button>
+
+
+                        <button type="button" class="reset-button" id="resetPeakFilter">
+
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+
+                        </button>
+
+                    </div>
+
+
+                    <p class="filter-result" id="peakFilterResult">
+                        Showing all recorded business hours.
+                    </p>
+
+                </div>
+
+
+                <!-- PEAK HOURS CHARTS -->
+                <div class="analytics-grid">
+
+                    <div class="content-card chart-wide">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Hourly Transaction Distribution</h3>
+
+                                <p>
+                                    Number of transactions recorded during each hour.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="chart-container">
+
+                            <canvas id="peakHoursChart"></canvas>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="content-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>Peak Hour Summary</h3>
+
+                                <p>
+                                    Highest recorded business activity.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="peak-summary">
+
+                            <div class="peak-summary-icon">
+
+                                <i class="fa-solid fa-clock"></i>
+
+                            </div>
+
+                            <span>BUSIEST HOUR</span>
+
+                            <h3 id="peakHourValue">N/A</h3>
+
+                            <p id="peakHourTransactions">
+                                No transactions recorded.
+                            </p>
+
+                        </div>
+
+
+                        <div class="performance-row">
+
+                            <span>Peak Hour Sales</span>
+
+                            <strong id="peakHourSales">₱0.00</strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PEAK HOURS INSIGHT -->
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <div>
+
+                        <span>PEAK HOURS INSIGHT</span>
+
+                        <h3 id="peakInsightTitle">
+                            Waiting for transaction data
+                        </h3>
+
+                        <p id="peakInsightText">
+                            Peak-hour insights will appear when transaction records are available.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- MAIN FOOTER -->
+            <footer class="main-footer">
+
+                CaféSense Sales and Customer Behavior Analytics System
+
+            </footer>
+
+        </div>
+
+    </main>
+
+</div>
+
+    <!-- CUSTOM JS -->
+    <script src="./analytics.js" defer></script>
+    
+</body>
+</html>

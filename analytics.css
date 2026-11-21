@@ -1,0 +1,2327 @@
+/* =========================================================
+   CAFÉSENSE - ANALYTICS & INSIGHTS STYLES
+========================================================= */
+
+:root {
+    --bg-main: #f7f4ef;
+    --card-bg: #ffffff;
+
+    --sidebar-bg: #2d2019;
+    --sidebar-hover: #3d2b23;
+    --sidebar-active: #4e362c;
+
+    --caramel: #b97845;
+    --caramel-dark: #986039;
+    --caramel-light: #f5eae1;
+
+    --espresso: #35231c;
+    --text-main: #2b201b;
+    --text-muted: #8c7f77;
+
+    --border-subtle: #ede5dd;
+
+    --success-green: #388e3c;
+    --warning-orange: #e68a27;
+    --danger-red: #d9534f;
+
+    --shadow-soft: 0 10px 30px rgba(53, 35, 28, 0.05);
+
+    --sidebar-width: 272px;
+    --sidebar-collapsed-width: 78px;
+}
+
+
+/* =========================================================
+   1. RESET AND GLOBAL STYLES
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.analytics-body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--caramel);
+    outline-offset: 3px;
+}
+
+.app-layout {
+    display: block;
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   2. SIDEBAR
+========================================================= */
+
+.sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+
+    height: 100%;
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    background: var(--sidebar-bg);
+    color: #f3efe9;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 24px 18px;
+
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+
+    transition:
+        width 0.3s ease,
+        min-width 0.3s ease,
+        padding 0.3s ease,
+        transform 0.3s ease;
+
+    overflow: hidden;
+    z-index: 1000;
+}
+
+
+/* =========================================================
+   3. SIDEBAR HEADER AND BRANDING
+========================================================= */
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding-bottom: 24px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    min-width: 0;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+
+    background: linear-gradient(
+        135deg,
+        var(--caramel),
+        var(--caramel-dark)
+    );
+
+    color: white;
+
+    border-radius: 12px;
+
+    display: grid;
+    place-items: center;
+
+    font-size: 18px;
+
+    flex-shrink: 0;
+}
+
+.brand-title {
+    min-width: 0;
+    flex: 1;
+}
+
+.brand-title h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+}
+
+.role-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: #e5c5a5;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+
+/* DESKTOP SIDEBAR TOGGLE */
+
+.sidebar-header-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+
+    margin-left: auto;
+
+    flex-shrink: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+
+    background: transparent;
+    color: #f3efe9;
+
+    font-size: 15px;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.sidebar-header-toggle:hover {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+
+/* MOBILE SIDEBAR CLOSE BUTTON */
+
+.sidebar-close-btn {
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    margin-left: auto;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #f3efe9;
+
+    font-size: 18px;
+
+    flex-shrink: 0;
+
+    transition: background 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+    background: var(--sidebar-hover);
+}
+
+
+/* =========================================================
+   4. SIDEBAR NAVIGATION
+========================================================= */
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    margin-top: 20px;
+
+    flex-grow: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    white-space: nowrap;
+
+    scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    min-width: 0;
+}
+
+.nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+
+    color: #9c8a7d;
+
+    letter-spacing: 1.2px;
+
+    display: block;
+
+    margin-bottom: 7px;
+    padding-left: 10px;
+
+    white-space: nowrap;
+}
+
+
+/* NAVIGATION ITEMS */
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+    min-height: 42px;
+
+    padding: 10px 14px;
+
+    border: 0;
+    border-radius: 10px;
+
+    background: transparent;
+    color: #d4c5bd;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    text-align: left;
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.nav-item i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 18px;
+    min-width: 18px;
+
+    flex-shrink: 0;
+
+    color: #b39f93;
+
+    font-size: 15px;
+
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* NAVIGATION HOVER */
+
+.nav-item:hover:not(.active) {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+.nav-item:hover:not(.active) i {
+    color: white;
+}
+
+
+/* ACTIVE NAVIGATION */
+
+.nav-item.active,
+.nav-item.active:hover,
+.nav-item.active:focus {
+    background: linear-gradient(
+        135deg,
+        var(--caramel),
+        #a76938
+    );
+
+    color: white;
+
+    font-weight: 600;
+
+    box-shadow: 0 4px 15px rgba(185, 120, 69, 0.3);
+}
+
+.nav-item.active i,
+.nav-item.active:hover i {
+    color: white;
+}
+
+
+/* NAVIGATION TEXT */
+
+.nav-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+
+/* =========================================================
+   5. ANALYTICS DROPDOWN
+========================================================= */
+
+.analytics-dropdown-toggle {
+    position: relative;
+    justify-content: flex-start;
+}
+
+/* DROPDOWN ARROW */
+
+.dropdown-arrow {
+    width: auto !important;
+    min-width: auto !important;
+
+    margin-left: auto;
+
+    font-size: 11px !important;
+
+    transition: transform 0.25s ease;
+}
+
+.analytics-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+
+/* ANALYTICS SUBMENU */
+
+.analytics-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    margin-left: 14px;
+    padding-left: 12px;
+
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+
+    max-height: 300px;
+
+    opacity: 1;
+
+    overflow: hidden;
+
+    transition:
+        max-height 0.3s ease,
+        opacity 0.25s ease,
+        margin 0.25s ease;
+}
+
+.analytics-nav-list.collapsed {
+    max-height: 0;
+
+    opacity: 0;
+
+    margin-top: 0;
+    margin-bottom: 0;
+
+    pointer-events: none;
+}
+
+
+/* ANALYTICS SUBMENU ITEMS */
+
+.analytics-nav-item {
+    min-height: 36px;
+
+    padding: 8px 12px;
+
+    font-size: 11px;
+    gap: 10px;
+}
+
+.analytics-nav-item i {
+    font-size: 12px;
+}
+
+.analytics-nav-item:hover:not(.active) {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+.analytics-nav-item:hover:not(.active) i {
+    color: white;
+}
+
+
+/* =========================================================
+   6. SIDEBAR FOOTER AND USER PROFILE
+========================================================= */
+
+.sidebar-footer {
+    padding-top: 16px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    padding: 10px 12px;
+
+    border-radius: 12px;
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+
+    min-width: 0;
+}
+
+.user-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 50%;
+
+    background: var(--caramel);
+    color: white;
+
+    font-weight: 700;
+    font-size: 12px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: white;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 10px;
+    color: #a39387;
+}
+
+.logout-btn {
+    background: transparent;
+
+    border: 0;
+
+    color: #b39f93;
+
+    font-size: 14px;
+
+    padding: 7px;
+
+    border-radius: 6px;
+
+    flex-shrink: 0;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(182, 71, 61, 0.2);
+    color: #ff8075;
+}
+
+.sidebar-copyright {
+    color: #8c796d;
+
+    font-size: 9px;
+
+    text-align: center;
+
+    margin-top: 14px;
+}
+
+
+/* =========================================================
+   7. COLLAPSED DESKTOP SIDEBAR
+========================================================= */
+
+@media (min-width: 851px) {
+
+    .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+        min-width: var(--sidebar-collapsed-width);
+
+        padding: 24px 10px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sidebar.collapsed .brand-logo {
+        display: grid;
+        order: 0;
+
+        width: 42px;
+        height: 42px;
+
+        margin: 0 auto;
+    }
+
+    .sidebar.collapsed .sidebar-header-toggle {
+        display: inline-flex;
+        order: 1;
+
+        width: 34px;
+        height: 34px;
+
+        margin: 0 auto;
+    }
+
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .sidebar-close-btn,
+    .sidebar.collapsed .nav-section-label,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .user-info,
+    .sidebar.collapsed .sidebar-copyright {
+        display: none;
+    }
+
+    .sidebar.collapsed .sidebar-nav {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .sidebar.collapsed .nav-section {
+        align-items: center;
+        width: 100%;
+    }
+
+    .sidebar.collapsed .nav-item {
+        justify-content: center;
+
+        gap: 0;
+
+        width: 100%;
+        min-height: 44px;
+
+        padding: 10px 0;
+    }
+
+    .sidebar.collapsed .nav-item i {
+        width: 22px;
+        min-width: 22px;
+        height: 22px;
+
+        font-size: 17px;
+    }
+
+
+    /* ANALYTICS DROPDOWN TOGGLE */
+
+    .sidebar.collapsed .analytics-dropdown-toggle {
+        justify-content: center;
+        gap: 2px;
+    }
+
+
+    /* KEEP DROPDOWN ARROW VISIBLE */
+
+    .sidebar.collapsed .analytics-dropdown-toggle .dropdown-arrow {
+        display: inline-flex !important;
+
+        width: 10px !important;
+        min-width: 10px !important;
+
+        margin-left: 0;
+
+        font-size: 9px !important;
+    }
+
+
+    /* COLLAPSED ANALYTICS SUBMENU */
+
+    .sidebar.collapsed .analytics-nav-list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        width: 100%;
+
+        max-height: 250px;
+
+        margin: 4px 0 0;
+        padding: 0;
+
+        border: none;
+
+        opacity: 1;
+
+        overflow: hidden;
+
+        gap: 3px;
+    }
+
+    .sidebar.collapsed .analytics-nav-list.collapsed {
+        max-height: 0;
+
+        margin-top: 0;
+        margin-bottom: 0;
+
+        opacity: 0;
+
+        pointer-events: none;
+    }
+
+    .sidebar.collapsed .analytics-nav-item {
+        justify-content: center;
+
+        width: 100%;
+        min-height: 38px;
+
+        padding: 8px 0;
+
+        gap: 0;
+    }
+
+    .sidebar.collapsed .analytics-nav-item i {
+        width: 22px;
+        min-width: 22px;
+
+        font-size: 15px;
+    }
+
+
+    /* COLLAPSED USER PROFILE */
+
+    .sidebar.collapsed .user-profile-card {
+        justify-content: center;
+
+        padding: 8px 4px;
+
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .sidebar.collapsed .logout-btn {
+        display: grid;
+        place-items: center;
+
+        padding: 7px;
+    }
+}
+
+
+/* =========================================================
+   8. MAIN CONTENT AND SCROLLING
+========================================================= */
+
+.main-content {
+    width: calc(100% - var(--sidebar-width));
+    margin-left: var(--sidebar-width);
+
+    min-width: 0;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    transition:
+        width 0.3s ease,
+        margin-left 0.3s ease;
+}
+
+
+/* ADJUST MAIN CONTENT WHEN SIDEBAR COLLAPSES */
+
+@media (min-width: 851px) {
+
+    .sidebar.collapsed ~ .main-content {
+        width: calc(100% - var(--sidebar-collapsed-width));
+        margin-left: var(--sidebar-collapsed-width);
+    }
+}
+
+
+/* =========================================================
+   9. TOP HEADER
+========================================================= */
+
+.top-header {
+    min-height: 84px;
+
+    background: var(--card-bg);
+
+    border-bottom: 1px solid var(--border-subtle);
+
+    padding: 0 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    flex-shrink: 0;
+}
+
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    min-width: 0;
+}
+
+
+/* MOBILE SIDEBAR TOGGLE - MATCH DASHBOARD */
+
+.sidebar-toggle-btn {
+    display: grid;
+    place-items: center;
+
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    border: 1px solid var(--border-subtle);
+
+    background: var(--bg-main);
+    color: var(--espresso);
+
+    font-size: 17px;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--caramel-light);
+    color: var(--caramel);
+}
+
+
+/* DESKTOP SIDEBAR TOGGLE OVERRIDE
+   Keep this AFTER the shared .sidebar-toggle-btn rule.
+   This matches the Dashboard desktop hamburger. */
+
+.sidebar-header-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+
+    margin-left: auto;
+
+    flex-shrink: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+
+    background: transparent;
+    color: #f3efe9;
+
+    font-size: 15px;
+}
+
+.sidebar-header-toggle:hover {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+
+/* HIDE MOBILE HAMBURGER ON DESKTOP */
+
+.mobile-sidebar-toggle {
+    display: none;
+}
+
+
+/* HEADER GREETING */
+
+.header-greeting {
+    min-width: 0;
+}
+
+.header-greeting h1 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    color: var(--espresso);
+}
+
+.header-greeting p {
+    font-size: 12px;
+
+    color: var(--text-muted);
+
+    margin-top: 3px;
+}
+
+
+/* HEADER ACTIONS */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    flex-shrink: 0;
+}
+
+.date-badge {
+
+    background: var(--bg-main);
+
+    border: 1px solid var(--border-subtle);
+
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    color: var(--text-main);
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 6px;
+
+    white-space: nowrap;
+
+}
+
+.date-row,
+.time-row {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+}
+
+.date-row {
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.3px;
+
+}
+
+.time-row {
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+}
+
+.date-row i,
+.time-row i {
+
+    width: 15px;
+
+    color: var(--caramel);
+
+    font-size: 13px;
+
+    text-align: center;
+
+}
+
+/* =========================================================
+   10. MAIN PAGE SCROLLBAR
+========================================================= */
+
+.analytics-page-content {
+    width: 100%;
+
+    flex: 1;
+    min-height: 0;
+
+    padding: 32px 36px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scroll-behavior: smooth;
+}
+
+.analytics-page-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.analytics-page-content::-webkit-scrollbar-track {
+    background: #eee8e1;
+}
+
+.analytics-page-content::-webkit-scrollbar-thumb {
+    background: #c3a28b;
+    border-radius: 10px;
+}
+
+.analytics-page-content::-webkit-scrollbar-thumb:hover {
+    background: var(--caramel);
+}
+
+
+/* =========================================================
+   11. PAGE INTRODUCTION
+========================================================= */
+
+.page-intro {
+    margin-bottom: 30px;
+}
+
+.eyebrow,
+.section-number {
+    color: var(--caramel-dark);
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1.2px;
+}
+
+.page-intro h2 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 25px;
+
+    color: var(--espresso);
+
+    margin-top: 7px;
+}
+
+.page-intro p {
+    color: var(--text-muted);
+
+    font-size: 12px;
+
+    margin-top: 7px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   12. FILTERS
+========================================================= */
+
+.filter-container {
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-subtle);
+
+    border-radius: 16px;
+
+    padding: 20px 22px;
+
+    margin-bottom: 24px;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.filter-heading h3 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 17px;
+
+    color: var(--espresso);
+}
+
+.filter-heading p {
+    font-size: 12px;
+
+    color: var(--text-muted);
+
+    margin-top: 4px;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+
+    gap: 14px;
+
+    margin-top: 18px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+
+    min-width: 180px;
+
+    flex: 1;
+}
+
+.filter-group label {
+    font-size: 11px;
+    font-weight: 700;
+
+    color: var(--text-main);
+}
+
+.filter-group select {
+    width: 100%;
+    min-width: 0;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--border-subtle);
+
+    border-radius: 8px;
+
+    background: #fff;
+    color: var(--text-main);
+
+    font-family: inherit;
+    font-size: 12px;
+
+    outline: none;
+}
+
+.filter-group select:focus {
+    border-color: var(--caramel);
+}
+
+
+/* FILTER BUTTONS */
+
+.apply-button,
+.reset-button {
+    padding: 10px 15px;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+
+    white-space: nowrap;
+}
+
+.apply-button {
+    background: var(--caramel);
+    color: white;
+}
+
+.apply-button:hover {
+    background: var(--caramel-dark);
+    transform: translateY(-1px);
+}
+
+.reset-button {
+    background: var(--caramel-light);
+    color: var(--espresso);
+}
+
+.reset-button:hover {
+    background: #ead8c8;
+}
+
+.filter-result {
+    font-size: 11px;
+
+    color: var(--text-muted);
+
+    margin-top: 13px;
+}
+
+
+/* =========================================================
+   13. ANALYTICS SECTIONS
+========================================================= */
+
+.analytics-section {
+    margin-bottom: 48px;
+
+    scroll-margin-top: 20px;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 15px;
+
+    margin: 0 0 18px;
+}
+
+.section-heading h2 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 21px;
+
+    color: var(--espresso);
+
+    margin-top: 5px;
+}
+
+.section-heading p {
+    font-size: 12px;
+
+    color: var(--text-muted);
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   14. ANALYTICS GRID AND CARDS
+========================================================= */
+
+.analytics-grid {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+
+    align-items: stretch;
+}
+
+.content-card {
+    min-width: 0;
+
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-subtle);
+
+    border-radius: 18px;
+
+    padding: 24px;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.chart-wide {
+    grid-column: 1 / -1;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.card-header h3 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 17px;
+
+    color: var(--espresso);
+}
+
+.card-header p {
+    font-size: 11px;
+
+    color: var(--text-muted);
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   15. CHARTS
+========================================================= */
+
+.chart-container {
+    position: relative;
+
+    width: 100%;
+    height: 300px;
+}
+
+.chart-container-medium {
+    height: 280px;
+}
+
+.chart-container canvas {
+    max-width: 100%;
+}
+
+
+/* =========================================================
+   16. PERFORMANCE BREAKDOWN
+========================================================= */
+
+.performance-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.performance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 16px 0;
+
+    border-bottom: 1px solid var(--border-subtle);
+
+    font-size: 12px;
+}
+
+.performance-row:last-child {
+    border-bottom: none;
+}
+
+.performance-row span {
+    color: var(--text-muted);
+}
+
+.performance-row strong {
+    color: var(--espresso);
+    text-align: right;
+}
+
+
+/* =========================================================
+   17. ANALYTICS TABLES
+========================================================= */
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.analytics-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+.analytics-table thead {
+    background: #faf7f3;
+}
+
+.analytics-table th {
+    padding: 13px 12px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    color: var(--text-muted);
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.analytics-table td {
+    padding: 14px 12px;
+
+    font-size: 11px;
+
+    color: var(--text-main);
+
+    border-bottom: 1px solid #f2ede8;
+}
+
+.analytics-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.analytics-table td:last-child {
+    font-weight: 700;
+}
+
+.empty-message {
+    text-align: center;
+
+    color: var(--text-muted) !important;
+
+    padding: 25px !important;
+}
+
+
+/* =========================================================
+   18. BUSINESS INSIGHTS
+========================================================= */
+
+.insight-card {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 15px;
+
+    background: #fffaf5;
+
+    border: 1px solid #efdfd0;
+    border-left: 4px solid var(--caramel);
+
+    border-radius: 12px;
+
+    padding: 19px 21px;
+
+    margin-top: 18px;
+}
+
+.insight-icon {
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    border-radius: 10px;
+
+    display: grid;
+    place-items: center;
+}
+
+.insight-card span {
+    display: block;
+
+    color: var(--caramel-dark);
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 5px;
+}
+
+.insight-card h3 {
+    font-size: 13px;
+
+    color: var(--espresso);
+}
+
+.insight-card p {
+    font-size: 11px;
+
+    line-height: 1.6;
+
+    color: var(--text-muted);
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   19. PEAK HOUR SUMMARY
+========================================================= */
+
+.peak-summary {
+    text-align: center;
+
+    padding: 15px 0 20px;
+}
+
+.peak-summary-icon {
+    width: 48px;
+    height: 48px;
+
+    margin: 0 auto 12px;
+
+    border-radius: 14px;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    display: grid;
+    place-items: center;
+
+    font-size: 19px;
+}
+
+.peak-summary span {
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    color: var(--text-muted);
+}
+
+.peak-summary h3 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 27px;
+
+    color: var(--espresso);
+
+    margin-top: 6px;
+}
+
+.peak-summary p {
+    font-size: 11px;
+
+    color: var(--text-muted);
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   20. MAIN FOOTER
+========================================================= */
+
+.main-footer {
+    margin-top: 10px;
+
+    padding: 20px 30px;
+
+    text-align: center;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   21. TABLET RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .analytics-page-content {
+        padding: 26px 24px;
+    }
+
+    .top-header {
+        padding: 0 24px;
+    }
+}
+
+
+/* =========================================================
+   22. MOBILE SIDEBAR
+========================================================= */
+
+@media (max-width: 850px) {
+
+    .sidebar {
+        position: fixed;
+
+        top: 0;
+        left: 0;
+        bottom: 0;
+
+        width: 272px;
+        min-width: 272px;
+
+        height: 100vh;
+        height: 100dvh;
+
+        padding: 24px 18px;
+
+        z-index: 1000;
+
+        transform: translateX(-100%);
+
+        overflow: hidden;
+
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+
+    /* MOBILE SIDEBAR HEADER */
+
+    .sidebar-header {
+        justify-content: flex-start;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .sidebar .brand-logo {
+        display: grid;
+
+        width: 42px;
+        height: 42px;
+
+        order: 0;
+    }
+
+    .sidebar .brand-title {
+        display: block;
+
+        min-width: 0;
+        flex: 1;
+    }
+
+    .sidebar .sidebar-header-toggle {
+        display: none;
+    }
+
+    .sidebar .sidebar-close-btn {
+        display: inline-flex;
+    }
+
+
+    /* RESTORE NAVIGATION TEXT */
+
+    .sidebar .nav-section-label {
+        display: block;
+    }
+
+    .sidebar .nav-text {
+        display: inline;
+    }
+
+    .sidebar .user-info {
+        display: flex;
+    }
+
+    .sidebar .sidebar-copyright {
+        display: block;
+    }
+
+
+    /* RESTORE NAVIGATION LAYOUT */
+
+    .sidebar .sidebar-nav {
+        width: 100%;
+
+        min-height: 0;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .sidebar .nav-section {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .sidebar .nav-item {
+        justify-content: flex-start;
+
+        gap: 12px;
+
+        width: 100%;
+        min-height: 42px;
+
+        padding: 10px 14px;
+    }
+
+    .sidebar .nav-item i {
+        display: inline-flex;
+
+        width: 18px;
+        min-width: 18px;
+
+        font-size: 15px;
+    }
+
+    .sidebar .analytics-dropdown-toggle {
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .sidebar .dropdown-arrow {
+        display: inline-flex;
+        margin-left: auto;
+    }
+
+    .sidebar .analytics-nav-list {
+        display: flex;
+
+        align-items: stretch;
+
+        margin-left: 14px;
+        padding-left: 12px;
+
+        border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+
+    /* COLLAPSED CLASS MUST NOT AFFECT MOBILE */
+
+    .sidebar.collapsed {
+        width: 272px;
+        min-width: 272px;
+
+        padding: 24px 18px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: flex-start;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .sidebar.collapsed .brand-logo {
+        display: grid;
+        order: 0;
+    }
+
+    .sidebar.collapsed .brand-title,
+    .sidebar.collapsed .nav-section-label,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .user-info,
+    .sidebar.collapsed .sidebar-copyright {
+        display: initial;
+    }
+
+    .sidebar.collapsed .brand-title {
+        display: block;
+    }
+
+    .sidebar.collapsed .sidebar-close-btn {
+        display: inline-flex;
+    }
+
+    .sidebar.collapsed .sidebar-header-toggle {
+        display: none;
+    }
+
+    .sidebar.collapsed .nav-section {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .sidebar.collapsed .nav-item {
+        justify-content: flex-start;
+
+        gap: 12px;
+
+        width: 100%;
+        min-height: 42px;
+
+        padding: 10px 14px;
+    }
+
+    .sidebar.collapsed .nav-item i {
+        width: 18px;
+        min-width: 18px;
+
+        font-size: 15px;
+    }
+
+    .sidebar.collapsed .analytics-dropdown-toggle {
+        justify-content: flex-start;
+    }
+
+    .sidebar.collapsed .dropdown-arrow {
+        display: inline-flex;
+    }
+
+    .sidebar.collapsed .analytics-nav-list {
+        display: flex;
+
+        align-items: stretch;
+
+        margin-left: 14px;
+        padding-left: 12px;
+
+        border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .sidebar.collapsed .user-profile-card {
+        justify-content: flex-start;
+
+        padding: 10px 12px;
+
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .sidebar.collapsed .logout-btn {
+        display: block;
+    }
+
+
+    /* MOBILE SIDEBAR OVERLAY */
+
+    body.sidebar-overlay-active::before {
+        content: "";
+
+        position: fixed;
+        inset: 0;
+
+        background: rgba(25, 17, 13, 0.48);
+
+        z-index: 999;
+    }
+
+
+    /* MOBILE HAMBURGER - MATCH DASHBOARD */
+
+    .sidebar-toggle-btn,
+    .mobile-sidebar-toggle {
+        display: grid;
+        place-items: center;
+
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+
+        flex-shrink: 0;
+
+        border-radius: 10px;
+
+        border: 1px solid var(--border-subtle);
+
+        background: var(--bg-main);
+        color: var(--espresso);
+
+        font-size: 17px;
+
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .sidebar-toggle-btn:hover,
+    .mobile-sidebar-toggle:hover {
+        background: var(--caramel-light);
+        color: var(--caramel);
+    }
+
+
+    /* MAIN CONTENT */
+
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+
+        min-width: 0;
+    }
+}
+
+
+/* =========================================================
+   23. MOBILE RESPONSIVE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .top-header {
+        min-height: 75px;
+
+        padding: 15px 18px;
+
+        gap: 12px;
+    }
+
+    .header-left-group {
+        gap: 10px;
+    }
+
+    .header-greeting h1 {
+        font-size: 18px;
+    }
+
+    .header-greeting p {
+        font-size: 10px;
+        max-width: 240px;
+    }
+
+    .date-badge {
+    padding: 8px 10px;
+    gap: 5px;
+}
+
+.date-row {
+    font-size: 9px;
+}
+
+.time-row {
+    font-size: 10px;
+}
+
+.date-row i,
+.time-row i {
+    display: inline-flex;
+    font-size: 11px;
+}
+
+    .analytics-page-content {
+        padding: 22px 16px;
+    }
+
+    .page-intro h2 {
+        font-size: 21px;
+    }
+
+    .filter-container {
+        padding: 17px;
+    }
+
+    .filter-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filter-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .apply-button,
+    .reset-button {
+        width: 100%;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .chart-wide {
+        grid-column: auto;
+    }
+
+    .content-card {
+        padding: 18px;
+        border-radius: 15px;
+    }
+
+    .chart-container,
+    .chart-container-medium {
+        height: 250px;
+    }
+
+    .insight-card {
+        padding: 15px;
+    }
+
+    .section-heading h2 {
+        font-size: 19px;
+    }
+
+    /* SMALLER MOBILE HAMBURGER */
+
+    .sidebar-toggle-btn,
+    .mobile-sidebar-toggle {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+    }
+}
+
+
+/* =========================================================
+   24. SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .header-greeting h1 {
+        font-size: 16px;
+    }
+
+    .header-greeting p {
+        max-width: 175px;
+    }
+
+    .analytics-page-content {
+        padding: 18px 12px;
+    }
+}
+
+.date-badge {
+    padding: 7px 8px;
+}
+
+.date-row {
+    font-size: 8px;
+}
+
+.time-row {
+    font-size: 9px;
+}
+
+/* =========================================================
+   25. REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+
+/* =========================================================
+   26. LOGOUT CONFIRMATION MODAL
+========================================================= */
+
+/* Prevent background scrolling while the modal is open. */
+
+body.logout-modal-open {
+    overflow: hidden;
+}
+
+
+/* DARK OVERLAY */
+
+.logout-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(35, 24, 18, 0.58);
+
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition:
+        opacity 0.22s ease,
+        visibility 0.22s ease;
+}
+
+
+/* SHOW OVERLAY */
+
+.logout-modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* MODAL CONTAINER */
+
+.logout-modal {
+    position: relative;
+
+    width: 100%;
+    max-width: 420px;
+
+    padding: 36px 34px 30px;
+
+    background: var(--card-bg);
+
+    border: 1px solid rgba(237, 229, 221, 0.95);
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 70px rgba(30, 20, 15, 0.24),
+        0 5px 15px rgba(30, 20, 15, 0.08);
+
+    text-align: center;
+
+    transform: translateY(18px) scale(0.96);
+
+    transition: transform 0.25s ease;
+}
+
+
+/* MODAL ENTRANCE */
+
+.logout-modal-overlay.show .logout-modal {
+    transform: translateY(0) scale(1);
+}
+
+
+/* LOGOUT ICON */
+
+.logout-modal-icon {
+    width: 66px;
+    height: 66px;
+
+    margin: 0 auto 18px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: var(--caramel-light);
+    color: var(--caramel-dark);
+
+    font-size: 24px;
+
+    box-shadow: 0 5px 15px rgba(185, 120, 69, 0.10);
+}
+
+
+/* SMALL LABEL */
+
+.logout-modal-eyebrow {
+    display: block;
+
+    margin-bottom: 9px;
+
+    color: var(--caramel-dark);
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.8px;
+}
+
+
+/* MODAL TITLE */
+
+.logout-modal h2 {
+    margin: 0;
+
+    color: var(--espresso);
+
+    font-family: 'Playfair Display', serif;
+    font-size: 25px;
+    font-weight: 700;
+
+    letter-spacing: -0.3px;
+}
+
+
+/* MODAL DESCRIPTION */
+
+.logout-modal p {
+    max-width: 315px;
+
+    margin: 12px auto 28px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+
+/* MODAL BUTTON CONTAINER */
+
+.logout-modal-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+/* BOTH BUTTONS */
+
+.logout-modal-actions button {
+    min-height: 45px;
+
+    padding: 0 20px;
+
+    border: 1px solid transparent;
+    border-radius: 9px;
+
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* BUTTON PRESS EFFECT */
+
+.logout-modal-actions button:active {
+    transform: scale(0.97);
+}
+
+
+/* CANCEL BUTTON */
+
+.logout-modal-cancel {
+    flex: 1;
+
+    background: #f5f1ed;
+
+    border-color: var(--border-subtle) !important;
+
+    color: var(--text-main);
+}
+
+.logout-modal-cancel:hover {
+    background: #ebe3dc;
+    border-color: #dfd1c4 !important;
+}
+
+
+/* CONFIRM LOGOUT BUTTON */
+
+.logout-modal-confirm {
+    flex: 1;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    background: var(--caramel);
+    color: #ffffff;
+
+    box-shadow: 0 4px 12px rgba(185, 120, 69, 0.18);
+}
+
+.logout-modal-confirm:hover {
+    background: var(--caramel-dark);
+
+    box-shadow: 0 6px 16px rgba(152, 96, 57, 0.24);
+}
+
+
+/* KEYBOARD ACCESSIBILITY */
+
+.logout-modal-actions button:focus-visible {
+    outline: 2px solid var(--caramel);
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   27. LOGOUT MODAL RESPONSIVE DESIGN
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .logout-modal-overlay {
+        padding: 18px;
+    }
+
+    .logout-modal {
+        max-width: 360px;
+
+        padding: 30px 23px 25px;
+
+        border-radius: 17px;
+    }
+
+    .logout-modal-icon {
+        width: 58px;
+        height: 58px;
+
+        margin-bottom: 16px;
+
+        font-size: 21px;
+    }
+
+    .logout-modal h2 {
+        font-size: 22px;
+    }
+
+    .logout-modal p {
+        font-size: 11px;
+        margin-bottom: 24px;
+    }
+
+    .logout-modal-actions {
+        flex-direction: column-reverse;
+        gap: 9px;
+    }
+
+    .logout-modal-actions button {
+        width: 100%;
+        min-height: 44px;
+    }
+}
+
+
+/* =========================================================
+   28. LOGOUT MODAL REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .logout-modal-overlay,
+    .logout-modal,
+    .logout-modal-actions button {
+        transition: none;
+    }
+}

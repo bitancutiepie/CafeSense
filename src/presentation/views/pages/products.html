@@ -623,6 +623,114 @@
 
             </div>
 
+            <!-- ===================================================== -->
+            <!-- INVENTORY MOVEMENT HISTORY -->
+            <!-- ===================================================== -->
+
+            <div class="inventory-section movement-history-section">
+
+                <!-- SECTION HEADER -->
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>Inventory Movement History</h2>
+
+                        <p>
+                            Track stock changes, sales, and restocks across your products.
+                        </p>
+
+                    </div>
+
+                    <span class="product-count">
+                        <span id="movementCount">0</span> Records
+                    </span>
+
+                </div>
+
+
+                <!-- FILTER AND REFRESH -->
+                <div class="inventory-toolbar movement-history-toolbar">
+
+                    <div class="filter-group">
+
+                        <label for="movementProductFilter">
+                            Filter by Product
+                        </label>
+
+                        <select id="movementProductFilter">
+
+                            <option value="all">All Products</option>
+
+                        </select>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="secondary-btn"
+                        id="refreshMovementHistoryBtn">
+
+                        <i class="fa-solid fa-rotate"></i>
+                        Refresh History
+
+                    </button>
+
+                </div>
+
+
+                <!-- MOVEMENT HISTORY TABLE -->
+                <div class="table-container movement-history-table-container">
+
+                    <table class="product-table movement-history-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Date & Time</th>
+                                <th>Product</th>
+                                <th>Movement Type</th>
+                                <th>Quantity Changed</th>
+                                <th>Stock Before</th>
+                                <th>Stock After</th>
+                                <th>Reason</th>
+                                <th>Performed By</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="movementHistoryTableBody">
+
+                            <!-- MOVEMENT RECORDS WILL BE GENERATED USING JAVASCRIPT -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- EMPTY HISTORY MESSAGE -->
+                    <div
+                        class="empty-inventory"
+                        id="emptyMovementHistory"
+                        role="status"
+                        aria-live="polite">
+
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+
+                        <h3>No Movement Records Found</h3>
+
+                        <p>
+                            Inventory movements will appear here when stock changes are recorded.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </section>
 
     </main>
@@ -894,7 +1002,7 @@
 
 
     <!-- JAVASCRIPT -->
-    <script src="../assets/js/pages/products.js"></script>
+    <script type="module" src="../assets/js/pages/products.js"></script>
 
 </body>
 

@@ -1,4 +1,7 @@
-document.addEventListener("DOMContentLoaded", () => {
+import { transactionApi } from '../api/transactionApi.js';
+import { productApi } from '../api/productApi.js';
+
+document.addEventListener("DOMContentLoaded", async () => {
 
     // ==========================================
     // 1. LOCAL STORAGE AND DEFAULT PRODUCTS
@@ -479,73 +482,36 @@ document.addEventListener("DOMContentLoaded", () => {
     // 8. LOAD INVENTORY PRODUCTS
     // ==========================================
 
-    function loadProducts() {
+    async function loadProducts() {
 
     try {
 
-        const savedProducts = localStorage.getItem(
-            PRODUCTS_STORAGE_KEY
-        );
+        const response = await productApi.getAll();
 
-        if (savedProducts === null) {
+        const databaseProducts = response.data;
 
-            localStorage.setItem(
-                PRODUCTS_STORAGE_KEY,
-                JSON.stringify(defaultProducts)
-            );
-
-            return defaultProducts.map(product => ({ ...product }));
+        if (!Array.isArray(databaseProducts)) {
+            throw new Error("Invalid product data received from the API.");
         }
 
-        const parsedProducts = JSON.parse(savedProducts);
+        inventoryLoadError = false;
 
-        if (!Array.isArray(parsedProducts)) {
-            throw new Error("Invalid inventory data.");
-        }
+        return databaseProducts.map(product => ({
+            id: String(product.id),
+            name: String(product.name),
 
-        const loadedProducts = parsedProducts
-            .filter(product => (
-                product &&
-                product.id !== undefined &&
-                product.name &&
-                product.category &&
-                Number.isFinite(Number(product.price)) &&
-                Number(product.price) > 0 &&
-                Number.isInteger(Number(product.stock)) &&
-                Number(product.stock) >= 0
-            ))
-            .map(product => ({
-                id: String(product.id),
-                name: String(product.name),
+            category: String(product.category).trim() === "Pastries"
+                ? "Pastry / Baked Good"
+                : String(product.category),
 
-                category: String(product.category).trim() === "Pastries"
-                    ? "Pastry / Baked Good"
-                    : String(product.category),
-
-                price: Number(product.price),
-                stock: Number(product.stock)
-            }));
-
-        // Migrate existing saved inventory categories
-        const hasOldCategory = parsedProducts.some(product =>
-            product &&
-            String(product.category).trim() === "Pastries"
-        );
-
-        if (hasOldCategory) {
-
-            localStorage.setItem(
-                PRODUCTS_STORAGE_KEY,
-                JSON.stringify(loadedProducts)
-            );
-
-        }
-
-        return loadedProducts;
+            price: Number(product.price),
+            stock: Number(product.stock),
+            status: product.status
+        }));
 
     } catch (error) {
 
-        console.error("Unable to load inventory:", error);
+        console.error("Unable to load products from database:", error);
 
         inventoryLoadError = true;
 
@@ -553,36 +519,60 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 }
 
+
+// Refresh products from the database
+async function refreshProducts() {
+
+    const updatedProducts = await loadProducts();
+
+    if (inventoryLoadError) {
+        throw new Error(
+            "Unable to refresh inventory from the database."
+        );
+    }
+
+    products = updatedProducts;
+
+    displayProducts();
+}
+
     // ==========================================
     // 9. LOAD COMPLETED TRANSACTIONS
     // ==========================================
 
-    function loadTransactions() {
+    async function loadTransactions() {
 
-        try {
+    try {
 
-            const savedTransactions = localStorage.getItem(
-                TRANSACTIONS_STORAGE_KEY
-            );
+        const response = await transactionApi.getAll();
 
-            if (!savedTransactions) return [];
+        const databaseTransactions = response.data;
 
-            const parsedTransactions = JSON.parse(savedTransactions);
-
-            return Array.isArray(parsedTransactions)
-                ? parsedTransactions
-                : [];
-
-        } catch (error) {
-
-            console.error("Unable to load transactions:", error);
-
-            return [];
+        if (!Array.isArray(databaseTransactions)) {
+            throw new Error("Invalid transaction data received from the API.");
         }
-    }
 
-    products = loadProducts();
-    completedTransactions = loadTransactions();
+        return databaseTransactions;
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load transactions from database:",
+            error
+        );
+
+        showMessage(
+            "Transaction History Error",
+            "Unable to retrieve transaction history from the database. Please try again.",
+            "error"
+        );
+
+        return [];
+    }
+}
+
+    products = await loadProducts();
+    completedTransactions = await loadTransactions();
 
     // ==========================================
     // 10. RESET CUSTOMER COUNT
@@ -1441,7 +1431,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <p>
                     <strong>Transaction ID:</strong>
-                    ${escapeHTML(transaction.id)}
+                    ${escapeHTML(transaction.transactionId)}
+                </p>
+
+                <p>
+                    <strong>Transaction Code:</strong>
+                    ${escapeHTML(transaction.transactionCode)}
                 </p>
 
                 <p>
@@ -1592,171 +1587,137 @@ document.addEventListener("DOMContentLoaded", () => {
     // 22. COMPLETE TRANSACTION
     // ==========================================
 
-    function completeCheckout() {
+    async function completeCheckout() {
 
-        if (checkoutInProgress) return;
+    if (checkoutInProgress) return;
 
-        calculateOrder();
+    calculateOrder();
 
-        if (!validateCheckout()) return;
+    if (!validateCheckout()) return;
 
-        checkoutInProgress = true;
-
-        if (checkoutBtn) {
-            checkoutBtn.disabled = true;
-        }
-
-        try {
-
-            const selectedPayment = paymentMethod.value;
-
-            const amountReceived =
-                selectedPayment === "Cash"
-                    ? Number(cashReceived.value)
-                    : currentTotal;
-
-            const customerCount = Number(
-                customerCountInput.value
-            );
-
-            const transactionItems = cart.map(item => {
-
-                const discountRate = DISCOUNTS[item.customerType];
-
-                const lineSubtotal = roundMoney(
-                    item.price * item.quantity
-                );
-
-                const lineDiscount = roundMoney(
-                    lineSubtotal * discountRate / 100
-                );
-
-                const lineTotal = roundMoney(
-                    lineSubtotal - lineDiscount
-                );
-
-                return {
-                    productId: item.id,
-                    name: item.name,
-                    category: item.category,
-                    price: item.price,
-                    quantity: item.quantity,
-                    customerType: item.customerType,
-                    discountRate: discountRate,
-                    lineSubtotal: lineSubtotal,
-                    lineDiscount: lineDiscount,
-                    lineTotal: lineTotal
-                };
-            });
-
-            const customerTypes = [
-                ...new Set(
-                    transactionItems.map(item => item.customerType)
-                )
-            ];
-
-            const transaction = {
-
-                id: generateTransactionId(),
-
-                date: getCurrentDate(),
-                dateISO: new Date().toISOString(),
-
-                customerCount: customerCount,
-
-                paymentMethod: selectedPayment,
-
-                items: transactionItems,
-
-                customerTypes: customerTypes,
-
-                subtotal: currentSubtotal,
-
-                discount: currentDiscount,
-
-                total: currentTotal,
-
-                amountReceived: amountReceived
-            };
-
-            const updatedProducts = products.map(product => {
-
-                const soldQuantity =
-                    getProductQuantityInCart(product.id);
-
-                return {
-                    ...product,
-                    stock: product.stock - soldQuantity
-                };
-            });
-
-            const savedSuccessfully = saveCheckoutRecords(
-                updatedProducts,
-                transaction
-            );
-
-            if (!savedSuccessfully) {
-                throw new Error(
-                    "Unable to save inventory or transaction records."
-                );
-            }
-
-            generateReceipt(transaction);
-
-            if (receiptModal) {
-
-                receiptModal.style.display = "flex";
-
-                receiptModal.classList.add("active");
-
-                receiptModal.setAttribute(
-                    "aria-hidden",
-                    "false"
-                );
-            }
-
-            cart = [];
-
-            resetCustomerCount();
-
-            if (cashReceived) {
-                cashReceived.value = "";
-            }
-
-            if (paymentMethod) {
-                paymentMethod.value = "Cash";
-            }
-
-            updateCart();
-
-            updatePaymentMethod();
-
-            console.log(
-                "Completed transaction:",
-                transaction
-            );
-
-        } catch (error) {
-
-            console.error("Checkout error:", error);
-
-            showMessage(
-                "Transaction Failed",
-                "The transaction could not be completed. Please try again.",
-                "error"
-            );
-
-        } finally {
-
-            checkoutInProgress = false;
-
-            updateCart();
-        }
-    }
+    checkoutInProgress = true;
 
     if (checkoutBtn) {
-        checkoutBtn.addEventListener("click", completeCheckout);
+        checkoutBtn.disabled = true;
     }
+
+    try {
+
+        const selectedPayment = paymentMethod.value;
+
+        const amountReceived =
+            selectedPayment === "Cash"
+                ? Number(cashReceived.value)
+                : currentTotal;
+
+        const customerCount = Number(
+            customerCountInput.value
+        );
+
+        // Prepare transaction data for the backend
+        const transactionData = {
+
+            paymentMethod: selectedPayment,
+
+            customerCount: customerCount,
+
+            amountReceived: amountReceived,
+
+            items: cart.map(item => ({
+                productId: Number(item.id),
+                quantity: Number(item.quantity),
+                customerType: item.customerType
+            }))
+
+        };
+
+        // Send transaction to the backend
+        const response = await transactionApi.create(
+            transactionData
+        );
+
+        const transaction = response.data;
+
+        if (!transaction || !transaction.transactionId) {
+            throw new Error(
+                "Invalid transaction response from the server."
+            );
+        }
+
+        // Keep the completed transaction available in this session
+        completedTransactions.unshift(transaction);
+
+        // Generate receipt using backend transaction data
+        generateReceipt(transaction);
+
+        if (receiptModal) {
+            receiptModal.style.display = "flex";
+            receiptModal.classList.add("active");
+            receiptModal.setAttribute("aria-hidden", "false");
+        }
+
+        // Clear the cart after successful database checkout
+        cart = [];
+
+        resetCustomerCount();
+
+        if (cashReceived) {
+            cashReceived.value = "";
+        }
+
+        if (paymentMethod) {
+            paymentMethod.value = "Cash";
+        }
+
+        updateCart();
+        updatePaymentMethod();
+
+        console.log(
+            "Completed database transaction:",
+            transaction
+        );
+
+        // Refresh inventory using the latest database records
+        try {
+
+            await refreshProducts();
+
+        } catch (refreshError) {
+
+            console.error(
+                "Transaction succeeded, but inventory refresh failed:",
+                refreshError
+            );
+
+            showMessage(
+                "Transaction Completed",
+                "Your transaction was saved, but the inventory display could not be refreshed. Please reload the page.",
+                "warning"
+            );
+        }
+
+    } catch (error) {
+
+        console.error("Checkout error:", error);
+
+        showMessage(
+            "Transaction Failed",
+            error.message || "The transaction could not be completed. Please try again.",
+            "error"
+        );
+
+    } finally {
+
+        checkoutInProgress = false;
+
+        updateCart();
+
+    }
+}
+
+if (checkoutBtn) {
+    checkoutBtn.addEventListener("click", completeCheckout);
+}
 
     // ==========================================
     // 23. CLOSE RECEIPT

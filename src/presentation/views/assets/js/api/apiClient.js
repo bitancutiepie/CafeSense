@@ -2,7 +2,7 @@
  * Centralized API Client (Frontend Data Access Layer)
  */
 class ApiClient {
-    constructor(baseURL = '/api/v1') {
+    constructor(baseURL = 'http://localhost:5000/api/v1') {
         this.baseURL = baseURL;
     }
 
@@ -47,12 +47,18 @@ class ApiClient {
         return this.request(endpoint, { method: 'PUT', body: JSON.stringify(body), headers });
     }
 
+    // Send PATCH requests
+    patch(endpoint, body, headers = {}) {
+        return this.request(endpoint, { method: 'PATCH', body: JSON.stringify(body), headers });
+    }
+
     delete(endpoint, headers = {}) {
         return this.request(endpoint, { method: 'DELETE', headers });
     }
 }
 
 export const apiClient = new ApiClient();
+
 if (typeof window !== 'undefined') {
     window.apiClient = apiClient;
 }

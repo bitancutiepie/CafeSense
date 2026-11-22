@@ -10,12 +10,18 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "mysql2": "^3.24.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
   },
-  "keywords": ["cafesense", "pos", "express", "3-layered-architecture"],
+  "keywords": [
+    "cafesense",
+    "pos",
+    "express",
+    "3-layered-architecture"
+  ],
   "author": "CaféSense Team",
   "license": "ISC"
 }

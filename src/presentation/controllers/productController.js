@@ -44,6 +44,35 @@ class ProductController {
         }
     }
 
+    async adjustStock(req, res, next) {
+        try {
+            const { id } = req.params;
+            const updated = await productService.adjustStock(id, req.body);
+            return ApiResponse.success(res, updated, 'Product stock adjusted successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Retrieve inventory movement history
+    async getInventoryMovements(req, res, next) {
+        try {
+            const { productId } = req.query;
+
+            const movements = await productService.getInventoryMovements({
+                productId
+            });
+
+            return ApiResponse.success(
+                res,
+                movements,
+                'Inventory movements retrieved successfully'
+            );
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async deleteProduct(req, res, next) {
         try {
             const { id } = req.params;

@@ -2,7 +2,7 @@
    CAFÉSENSE - SALES REPORTS
    reports.js
 ========================================================= */
-
+import { transactionApi } from '../api/transactionApi.js';
 
 /* =========================
    1. STORAGE KEYS
@@ -395,68 +395,50 @@ function escapeHTML(value) {
    5. LOAD TRANSACTIONS
 ========================= */
 
-function loadTransactions() {
+async function loadTransactions() {
     try {
-        const savedTransactions = localStorage.getItem(
-            TRANSACTIONS_STORAGE_KEY
-        );
+        const response = await transactionApi.getAll();
+        const databaseTransactions = response.data;
 
-        if (!savedTransactions) {
-            transactions = [];
-            return;
+        if (!Array.isArray(databaseTransactions)) {
+            throw new Error("Invalid transaction data received from the API.");
         }
 
-        const parsedTransactions = JSON.parse(savedTransactions);
-
-        transactions = Array.isArray(parsedTransactions)
-            ? parsedTransactions.filter(transaction =>
+        transactions = databaseTransactions
+            .filter(transaction =>
                 transaction && typeof transaction === "object"
             )
-            : [];
-
-        // MIGRATE OLD PRODUCT CATEGORIES
-        let hasCategoryChanges = false;
-
-        transactions = transactions.map(transaction => {
-
-            if (!Array.isArray(transaction.items)) {
-                return transaction;
-            }
-
-            const updatedItems = transaction.items.map(item => {
-
-                if (
-                    typeof item.category === "string" &&
-                    item.category.trim().toLowerCase() === "pastries"
-                ) {
-                    hasCategoryChanges = true;
-
-                    return {
-                        ...item,
-                        category: "Pastry / Baked Good"
-                    };
-                }
-
-                return item;
-            });
-
-            return {
+            .map(transaction => ({
                 ...transaction,
-                items: updatedItems
-            };
-        });
+                items: Array.isArray(transaction.items)
+                    ? transaction.items.map(item => ({
+                        ...item,
+                        category:
+                            typeof item.category === "string" &&
+                            item.category.trim().toLowerCase() === "pastries"
+                                ? "Pastry / Baked Good"
+                                : item.category
+                    }))
+                    : []
+            }));
 
-        // SAVE MIGRATED TRANSACTIONS
-        if (hasCategoryChanges) {
-            localStorage.setItem(
-                TRANSACTIONS_STORAGE_KEY,
-                JSON.stringify(transactions)
-            );
-        }
+        return true;
 
     } catch (error) {
-        console.error("Unable to load transactions:", error);
+        console.error(
+            "Unable to load transactions from database:",
+            error
+        );
+
         transactions = [];
+        filteredTransactions = [];
+
+        showSystemDialog(
+            "Unable to retrieve sales records from the database. Please check your connection and try again.",
+            "Sales Report Error"
+        );
+
+        return false;
     }
 }
 
@@ -1270,7 +1252,7 @@ function updateTransactionRecordsTable() {
     transactionRecordsBody.innerHTML = sortedTransactions.map(transaction => {
         const date = getTransactionDate(transaction);
 
-        const transactionId = transaction.id || "N/A";
+        const transactionId = transaction.transactionId || "N/A";
         const customerCount = Number(transaction.customerCount) || 0;
         const paymentMethod = transaction.paymentMethod || "N/A";
 
@@ -1437,7 +1419,7 @@ async function exportTransactionsCSV() {
         const date = getTransactionDate(transaction);
 
         return [
-            transaction.id || "N/A",
+            transaction.transactionId ?? "N/A",
             date ? getLocalDateString(date) : "N/A",
             date ? formatTime(date) : "N/A",
             Number(transaction.customerCount) || 0,
@@ -1470,7 +1452,7 @@ async function exportProductSalesCSV() {
             const date = getTransactionDate(transaction);
 
             rows.push([
-                transaction.id || "N/A",
+                transaction.transactionId ?? "N/A",
                 date ? getLocalDateString(date) : "N/A",
                 item.productId || "N/A",
                 item.name || "Unknown Product",
@@ -1535,7 +1517,7 @@ async function exportCustomerSalesCSV() {
 
         breakdown.forEach(group => {
             rows.push([
-                transaction.id || "N/A",
+                transaction.transactionId ?? "N/A",
                 date ? getLocalDateString(date) : "N/A",
                 group.customerType,
                 group.grossSales.toFixed(2),
@@ -2068,16 +2050,16 @@ function setupReportEvents() {
    28. INITIALIZE PAGE
 ========================= */
 
-function initializeReportsPage() {
+async function initializeReportsPage() {
     updateCurrentDateTime();
-
-    loadTransactions();
 
     setDefaultDateFilters();
 
     setupReportEvents();
     setupSidebar();
     setupLogout();
+
+    await loadTransactions();
 
     generateReport();
 }
@@ -2089,26 +2071,33 @@ initializeReportsPage();
    29. REFRESH WHEN DATA CHANGES
 ========================= */
 
-function refreshReportData() {
-    loadTransactions();
+let reportRefreshInProgress = false;
 
-    const startValue = reportStartDate.value;
-    const endValue = reportEndDate.value;
+async function refreshReportData() {
 
-    if (!startValue || !endValue || startValue > endValue) {
+    if (reportRefreshInProgress) {
         return;
     }
 
-    generateReport();
-}
+    reportRefreshInProgress = true;
 
+    try {
 
-// Changes made in another browser tab.
-window.addEventListener("storage", function (event) {
-    if (event.key === TRANSACTIONS_STORAGE_KEY) {
-        refreshReportData();
+        await loadTransactions();
+
+        const startValue = reportStartDate.value;
+        const endValue = reportEndDate.value;
+
+        if (!startValue || !endValue || startValue > endValue) {
+            return;
+        }
+
+        generateReport();
+
+    } finally {
+        reportRefreshInProgress = false;
     }
-});
+}
 
 
 // Refresh when returning to the Reports page.

@@ -4,109 +4,70 @@
 
 
 /* =========================================================
-   1. INITIAL PRODUCT DATA
+   1. PRODUCT DATA
 ========================================================= */
 
-const LOW_STOCK_LIMIT = 10;
+import { productApi } from "../api/productApi.js";
 
+const LOW_STOCK_LIMIT = 10;
 const STORAGE_KEY = "cafeSenseProducts";
 const SIDEBAR_STORAGE_KEY = "cafeSenseSidebarCollapsed";
 
-const defaultProducts = [
-    { id: "P001", name: "Café Latte", category: "Coffee", price: 120, stock: 35 },
-    { id: "P002", name: "Americano", category: "Coffee", price: 100, stock: 28 },
-    { id: "P003", name: "Cappuccino", category: "Coffee", price: 130, stock: 22 },
-    { id: "P004", name: "Caramel Macchiato", category: "Coffee", price: 145, stock: 18 },
-    { id: "P005", name: "Spanish Latte", category: "Coffee", price: 140, stock: 30 },
-    { id: "P006", name: "Matcha Latte", category: "Non-Coffee", price: 170, stock: 20 },
-    { id: "P007", name: "Chocolate Milk", category: "Non-Coffee", price: 110, stock: 25 },
-    { id: "P008", name: "Strawberry Milk", category: "Non-Coffee", price: 120, stock: 16 },
-    { id: "P009", name: "Blueberry Cheesecake", category: "Pastry / Baked Good", price: 150, stock: 12 },
-    { id: "P010", name: "Chocolate Muffin", category: "Pastry / Baked Good", price: 85, stock: 24 },
-    { id: "P011", name: "Croissant", category: "Pastry / Baked Good", price: 95, stock: 20 },
-    { id: "P012", name: "Chocolate Chip Cookie", category: "Pastry / Baked Good", price: 65, stock: 40 }
-];
-
-let products = loadProducts();
+let products = [];
+let inventoryMovements = [];
 
 
 /* =========================================================
-   2. LOAD PRODUCTS
+   2. LOAD PRODUCTS FROM THE API
 ========================================================= */
 
-function loadProducts() {
+async function loadProducts() {
 
     try {
 
-        const savedProducts = localStorage.getItem(STORAGE_KEY);
+        const response = await productApi.getAll();
 
-        if (savedProducts !== null) {
-
-            const parsedProducts = JSON.parse(savedProducts);
-
-            if (Array.isArray(parsedProducts)) {
-
-                const loadedProducts = parsedProducts.filter(function (product) {
-
-                    return (
-                        product &&
-                        typeof product.id === "string" &&
-                        typeof product.name === "string" &&
-                        typeof product.category === "string" &&
-                        Number.isFinite(Number(product.price)) &&
-                        Number(product.price) > 0 &&
-                        Number.isInteger(Number(product.stock)) &&
-                        Number(product.stock) >= 0
-                    );
-
-                }).map(function (product) {
-
-                    return {
-                        id: product.id,
-                        name: product.name,
-
-                        category: product.category === "Pastries"
-                            ? "Pastry / Baked Good"
-                            : product.category,
-
-                        price: Number(product.price),
-                        stock: Number(product.stock)
-                    };
-
-                });
-
-                // Save migrated categories to localStorage
-                const hasOldCategory = parsedProducts.some(function (product) {
-                    return product && product.category === "Pastries";
-                });
-
-                if (hasOldCategory) {
-
-                    localStorage.setItem(
-                        STORAGE_KEY,
-                        JSON.stringify(loadedProducts)
-                    );
-
-                }
-
-                return loadedProducts;
-
-            }
-
-            console.warn("Invalid product data. Loading default products.");
-
+        if (!response.success || !Array.isArray(response.data)) {
+            throw new Error("The server returned an invalid product list.");
         }
+
+        products = response.data.map(function (product) {
+
+            return {
+                id: String(product.id),
+                name: product.name,
+                category: product.category,
+                price: Number(product.price),
+                stock: Number(product.stock)
+            };
+
+        });
+
+        updateInventorySummary();
+        displayProducts();
 
     } catch (error) {
 
-        console.error("Unable to load saved products:", error);
+        console.error("Unable to load products from the server:", error);
+
+        products = [];
+        updateInventorySummary();
+        displayProducts();
+
+        await showAppDialog({
+            title: "Unable to Load Products",
+            message: "CaféSense could not retrieve products from the database. Please check that the server is running and try refreshing the page.",
+            icon: "fa-triangle-exclamation",
+            tone: "danger"
+        });
 
     }
 
-    return defaultProducts.map(function (product) {
-        return { ...product };
-    });
+}
 
+
+function formatProductID(id) {
+    return "P" + String(id).padStart(3, "0");
 }
 
 
@@ -416,17 +377,9 @@ function saveProducts() {
 
 // Sidebar
 const sidebar = document.getElementById("sidebar");
-
-// Desktop collapse button
 const sidebarToggle = document.getElementById("sidebarToggle");
-
-// Mobile hamburger button
 const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
-
-// Mobile close button
 const sidebarClose = document.getElementById("sidebarClose");
-
-// Optional overlay element
 const sidebarOverlay = document.getElementById("sidebarOverlay");
 
 // Analytics dropdown
@@ -447,7 +400,6 @@ const displayProductCount = document.getElementById("displayProductCount");
 // Search and filters
 const productSearch = document.getElementById("productSearch");
 const clearSearchBtn = document.getElementById("clearSearchBtn");
-
 const categoryFilter = document.getElementById("categoryFilter");
 const stockFilter = document.getElementById("stockFilter");
 
@@ -472,7 +424,6 @@ const productStock = document.getElementById("productStock");
 // Stock modal
 const stockModal = document.getElementById("stockModal");
 const cancelStockBtn = document.getElementById("cancelStockBtn");
-
 const stockForm = document.getElementById("stockForm");
 
 const stockProductId = document.getElementById("stockProductId");
@@ -482,6 +433,14 @@ const currentStockValue = document.getElementById("currentStockValue");
 const stockAction = document.getElementById("stockAction");
 const stockQuantity = document.getElementById("stockQuantity");
 const stockReason = document.getElementById("stockReason");
+
+// Inventory Movement History
+const movementProductFilter = document.getElementById("movementProductFilter");
+const refreshMovementHistoryBtn = document.getElementById("refreshMovementHistoryBtn");
+
+const movementCount = document.getElementById("movementCount");
+const movementHistoryTableBody = document.getElementById("movementHistoryTableBody");
+const emptyMovementHistory = document.getElementById("emptyMovementHistory");
 
 
 /* =========================================================
@@ -500,7 +459,6 @@ function isMobileView() {
 }
 
 
-// Update accessibility attributes for both sidebar buttons
 function updateSidebarAccessibility() {
 
     if (!sidebar) {
@@ -514,7 +472,6 @@ function updateSidebarAccessibility() {
         : !sidebar.classList.contains("collapsed");
 
 
-    // Desktop toggle accessibility
     if (sidebarToggle) {
 
         sidebarToggle.setAttribute(
@@ -539,7 +496,6 @@ function updateSidebarAccessibility() {
     }
 
 
-    // Mobile toggle accessibility
     if (mobileSidebarToggle) {
 
         mobileSidebarToggle.setAttribute(
@@ -562,7 +518,6 @@ function updateSidebarAccessibility() {
 }
 
 
-// Open mobile sidebar
 function openMobileSidebar() {
 
     if (!sidebar || !isMobileView()) {
@@ -583,7 +538,6 @@ function openMobileSidebar() {
 }
 
 
-// Close mobile sidebar
 function closeMobileSidebar() {
 
     if (!sidebar) {
@@ -603,7 +557,6 @@ function closeMobileSidebar() {
 }
 
 
-// Apply the saved desktop state or reset the mobile state
 function applySidebarState() {
 
     if (!sidebar) {
@@ -612,7 +565,6 @@ function applySidebarState() {
 
     if (isMobileView()) {
 
-        // Mobile sidebar starts closed
         sidebar.classList.remove("collapsed");
         sidebar.classList.remove("mobile-open");
 
@@ -624,7 +576,6 @@ function applySidebarState() {
 
     } else {
 
-        // Restore the saved desktop sidebar preference
         const isCollapsed =
             localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
 
@@ -648,15 +599,10 @@ function applySidebarState() {
 }
 
 
-/* ---------------------------------------------------------
-   DESKTOP SIDEBAR COLLAPSE
---------------------------------------------------------- */
-
 if (sidebarToggle && sidebar) {
 
     sidebarToggle.addEventListener("click", function () {
 
-        // Desktop button only controls desktop sidebar
         if (isMobileView()) {
             return;
         }
@@ -678,10 +624,6 @@ if (sidebarToggle && sidebar) {
 }
 
 
-/* ---------------------------------------------------------
-   MOBILE SIDEBAR OPEN
---------------------------------------------------------- */
-
 if (mobileSidebarToggle) {
 
     mobileSidebarToggle.addEventListener("click", function () {
@@ -701,10 +643,6 @@ if (mobileSidebarToggle) {
 }
 
 
-/* ---------------------------------------------------------
-   MOBILE SIDEBAR CLOSE BUTTON
---------------------------------------------------------- */
-
 if (sidebarClose) {
 
     sidebarClose.addEventListener("click", function () {
@@ -718,10 +656,6 @@ if (sidebarClose) {
 }
 
 
-/* ---------------------------------------------------------
-   SIDEBAR OVERLAY
---------------------------------------------------------- */
-
 if (sidebarOverlay) {
 
     sidebarOverlay.addEventListener(
@@ -731,10 +665,6 @@ if (sidebarOverlay) {
 
 }
 
-
-/* ---------------------------------------------------------
-   CLOSE SIDEBAR WHEN CLICKING OUTSIDE
---------------------------------------------------------- */
 
 document.addEventListener("click", function (event) {
 
@@ -759,10 +689,6 @@ document.addEventListener("click", function (event) {
 });
 
 
-/* ---------------------------------------------------------
-   CLOSE SIDEBAR AFTER NAVIGATION
---------------------------------------------------------- */
-
 if (sidebar) {
 
     const sidebarLinks = sidebar.querySelectorAll("a[href]");
@@ -782,14 +708,8 @@ if (sidebar) {
 }
 
 
-/* ---------------------------------------------------------
-   HANDLE SCREEN RESIZING
---------------------------------------------------------- */
-
 window.addEventListener("resize", function () {
-
     applySidebarState();
-
 });
 
 
@@ -798,7 +718,6 @@ applySidebarState();
 
 /* =========================================================
    7. ANALYTICS DROPDOWN
-   SUPPORTS EXPANDED AND COLLAPSED SIDEBAR
 ========================================================= */
 
 function setupAnalyticsDropdown() {
@@ -808,9 +727,6 @@ function setupAnalyticsDropdown() {
     }
 
     analyticsDropdownToggle.addEventListener("click", function () {
-
-        // Toggle the Analytics submenu in both expanded
-        // and collapsed desktop sidebar modes.
 
         const isCurrentlyExpanded =
             analyticsDropdownToggle.getAttribute("aria-expanded") === "true";
@@ -1015,7 +931,7 @@ function displayProducts() {
         row.innerHTML = `
 
             <td>
-                <span class="product-id">${escapeHTML(product.id)}</span>
+                <span class="product-id">${escapeHTML(formatProductID(product.id))}</span>
             </td>
 
             <td>
@@ -1121,7 +1037,290 @@ function escapeHTML(value) {
 
 
 /* =========================================================
-   13. GENERATE PRODUCT ID
+   13. INVENTORY MOVEMENT HISTORY
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   POPULATE PRODUCT FILTER
+--------------------------------------------------------- */
+
+function populateMovementProductFilter() {
+
+    if (!movementProductFilter) {
+        return;
+    }
+
+    const selectedProduct = movementProductFilter.value;
+
+    movementProductFilter.innerHTML = `
+        <option value="all">All Products</option>
+    `;
+
+    products.forEach(function (product) {
+
+        const option = document.createElement("option");
+
+        option.value = product.id;
+        option.textContent = product.name;
+
+        movementProductFilter.appendChild(option);
+
+    });
+
+    const productStillExists = products.some(function (product) {
+        return product.id === selectedProduct;
+    });
+
+    movementProductFilter.value = productStillExists
+        ? selectedProduct
+        : "all";
+
+}
+
+
+/* ---------------------------------------------------------
+   LOAD INVENTORY MOVEMENTS FROM API
+--------------------------------------------------------- */
+
+async function loadInventoryMovements(productId = null) {
+
+    if (!movementHistoryTableBody) {
+        return;
+    }
+
+    try {
+
+        const response = await productApi.getInventoryMovements(productId);
+
+        if (!response.success || !Array.isArray(response.data)) {
+            throw new Error("Invalid inventory movement response.");
+        }
+
+        inventoryMovements = response.data;
+
+        displayInventoryMovements();
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load inventory movement history:",
+            error
+        );
+
+        inventoryMovements = [];
+
+        movementHistoryTableBody.innerHTML = "";
+
+        if (movementCount) {
+            movementCount.textContent = "0";
+        }
+
+        if (emptyMovementHistory) {
+
+            emptyMovementHistory.style.display = "block";
+
+            emptyMovementHistory.querySelector("h3").textContent =
+                "Unable to Load History";
+
+            emptyMovementHistory.querySelector("p").textContent =
+                "Please check your server connection and try refreshing.";
+
+        }
+
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   DISPLAY INVENTORY MOVEMENTS
+--------------------------------------------------------- */
+
+function displayInventoryMovements() {
+
+    if (!movementHistoryTableBody) {
+        return;
+    }
+
+    movementHistoryTableBody.innerHTML = "";
+
+    if (movementCount) {
+        movementCount.textContent = inventoryMovements.length;
+    }
+
+    if (inventoryMovements.length === 0) {
+
+        if (emptyMovementHistory) {
+
+            emptyMovementHistory.style.display = "block";
+
+            emptyMovementHistory.querySelector("h3").textContent =
+                "No Movement Records Found";
+
+            emptyMovementHistory.querySelector("p").textContent =
+                "Inventory movements will appear here when stock changes are recorded.";
+
+        }
+
+        return;
+
+    }
+
+    if (emptyMovementHistory) {
+        emptyMovementHistory.style.display = "none";
+    }
+
+
+    inventoryMovements.forEach(function (movement) {
+
+        // Format date and time
+        const movementDate = new Date(movement.movementDate);
+
+        const formattedDate = Number.isNaN(movementDate.getTime())
+            ? "—"
+            : movementDate.toLocaleString("en-PH", {
+                dateStyle: "medium",
+                timeStyle: "short"
+            });
+
+
+        // Determine movement badge style
+        const movementType = String(movement.movementType || "");
+
+        let movementClass = "default";
+
+        if (movementType === "Sale") {
+            movementClass = "sale";
+        } else if (movementType === "Restock") {
+            movementClass = "restock";
+        } else if (movementType === "Adjustment In") {
+            movementClass = "adjustment-in";
+        } else if (movementType === "Adjustment Out") {
+            movementClass = "adjustment-out";
+        }
+
+
+        // Format quantity change
+        const quantity = Number(movement.quantityChange);
+
+        const quantityClass = quantity > 0
+            ? "positive"
+            : quantity < 0
+                ? "negative"
+                : "";
+
+        const formattedQuantity = quantity > 0
+            ? `+${quantity}`
+            : String(quantity);
+
+
+        // Create table row
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+
+            <td>
+                ${escapeHTML(formattedDate)}
+            </td>
+
+            <td>
+                <span class="product-name">
+                    ${escapeHTML(movement.productName || "—")}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-type-badge ${movementClass}">
+                    ${escapeHTML(movementType || "Unknown")}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-quantity ${quantityClass}">
+                    ${escapeHTML(formattedQuantity)}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-stock-value">
+                    ${escapeHTML(movement.stockBefore ?? "—")}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-stock-value">
+                    ${escapeHTML(movement.stockAfter ?? "—")}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-reason">
+                    ${escapeHTML(movement.reason || "—")}
+                </span>
+            </td>
+
+            <td>
+                <span class="movement-performed-by">
+                    ${escapeHTML(movement.performedBy || "—")}
+                </span>
+            </td>
+
+        `;
+
+        movementHistoryTableBody.appendChild(row);
+
+    });
+
+}
+
+
+/* ---------------------------------------------------------
+   PRODUCT FILTER EVENT
+--------------------------------------------------------- */
+
+if (movementProductFilter) {
+
+    movementProductFilter.addEventListener("change", function () {
+
+        const selectedProduct = movementProductFilter.value;
+
+        const productId = selectedProduct === "all"
+            ? null
+            : selectedProduct;
+
+        loadInventoryMovements(productId);
+
+    });
+
+}
+
+
+/* ---------------------------------------------------------
+   REFRESH HISTORY BUTTON
+--------------------------------------------------------- */
+
+if (refreshMovementHistoryBtn) {
+
+    refreshMovementHistoryBtn.addEventListener("click", function () {
+
+        const selectedProduct = movementProductFilter
+            ? movementProductFilter.value
+            : "all";
+
+        const productId = selectedProduct === "all"
+            ? null
+            : selectedProduct;
+
+        loadInventoryMovements(productId);
+
+    });
+
+}
+
+
+/* =========================================================
+   14. GENERATE PRODUCT ID
 ========================================================= */
 
 function generateProductID() {
@@ -1144,7 +1343,7 @@ function generateProductID() {
 
 
 /* =========================================================
-   14. PRODUCT FORM CHANGE TRACKING
+   15. PRODUCT FORM CHANGE TRACKING
 ========================================================= */
 
 let productFormInitialState = null;
@@ -1184,7 +1383,7 @@ function hasUnsavedProductChanges() {
 
 
 /* =========================================================
-   15. OPEN ADD PRODUCT MODAL
+   16. OPEN ADD PRODUCT MODAL
 ========================================================= */
 
 function openAddProductModal() {
@@ -1214,7 +1413,7 @@ if (addProductBtn) {
 
 
 /* =========================================================
-   16. OPEN EDIT PRODUCT MODAL
+   17. OPEN EDIT PRODUCT MODAL
 ========================================================= */
 
 function openEditProductModal(id) {
@@ -1246,7 +1445,7 @@ function openEditProductModal(id) {
 
 
 /* =========================================================
-   17. SAVE PRODUCT
+   18. SAVE PRODUCT
 ========================================================= */
 
 if (productForm) {
@@ -1263,6 +1462,8 @@ if (productForm) {
         const price = Number(productPrice.value);
         const stock = Number(productStock.value);
 
+
+        // VALIDATION
 
         if (
             name === "" ||
@@ -1285,6 +1486,8 @@ if (productForm) {
         }
 
 
+        // CHECK DUPLICATE PRODUCT NAME
+
         const duplicateProduct = products.find(function (product) {
 
             return product.name.toLowerCase() === name.toLowerCase()
@@ -1306,27 +1509,7 @@ if (productForm) {
         }
 
 
-        if (id) {
-
-            const existingProduct = products.find(function (item) {
-                return item.id === id;
-            });
-
-            if (!existingProduct) {
-
-                await showAppDialog({
-                    title: "Product Not Found",
-                    message: "The product you are trying to update could not be found.",
-                    icon: "fa-circle-exclamation",
-                    tone: "danger"
-                });
-
-                return;
-
-            }
-
-        }
-
+        // CONFIRMATION
 
         const isEditing = Boolean(id);
 
@@ -1345,69 +1528,70 @@ if (productForm) {
         }
 
 
-        if (isEditing) {
+        // PRODUCT DATA
 
-            const product = products.find(function (item) {
-                return item.id === id;
+        const productData = {
+            name: name,
+            category: category,
+            price: price,
+            stock: stock
+        };
+
+
+        try {
+
+            if (isEditing) {
+
+                await productApi.update(id, productData);
+
+            } else {
+
+                await productApi.create(productData);
+
+            }
+
+
+            // RETRIEVE UPDATED PRODUCTS FROM MYSQL
+
+            await loadProducts();
+
+            populateMovementProductFilter();
+
+            // Refresh movement history in case product creation
+            // generated an initial inventory movement.
+            await loadInventoryMovements(
+                getSelectedMovementProductId()
+            );
+
+
+            updateInventorySummary();
+            displayProducts();
+
+            closeProductFormModal();
+
+
+            await showAppDialog({
+                title: isEditing ? "Product Updated" : "Product Added",
+                message: isEditing
+                    ? "The product information has been updated successfully."
+                    : "The new product has been saved to the database successfully.",
+                icon: "fa-circle-check",
+                tone: "success"
             });
 
-            if (!product) {
-                return;
-            }
 
-            const originalProduct = { ...product };
+        } catch (error) {
 
-            product.name = name;
-            product.category = category;
-            product.price = price;
-            product.stock = stock;
+            console.error("Unable to save product:", error);
 
-            if (!saveProducts()) {
-
-                Object.assign(product, originalProduct);
-
-                return;
-
-            }
-
-        } else {
-
-            const newProduct = {
-                id: generateProductID(),
-                name: name,
-                category: category,
-                price: price,
-                stock: stock
-            };
-
-            products.push(newProduct);
-
-            if (!saveProducts()) {
-
-                products.pop();
-
-                return;
-
-            }
+            await showAppDialog({
+                title: "Unable to Save Product",
+                message: error.message || "Something went wrong while saving the product. Please try again.",
+                icon: "fa-triangle-exclamation",
+                tone: "danger"
+            });
 
         }
-
-
-        updateInventorySummary();
-
-        displayProducts();
-
-        closeProductFormModal();
-
-
-        await showAppDialog({
-            title: isEditing ? "Product Updated" : "Product Added",
-            message: isEditing
-                ? "The product information has been updated successfully."
-                : "The new product has been added to your inventory successfully.",
-            icon: "fa-circle-check",
-            tone: "success"
-        });
 
     });
 
@@ -1415,7 +1599,7 @@ if (productForm) {
 
 
 /* =========================================================
-   18. CLOSE PRODUCT MODAL
+   19. CLOSE PRODUCT MODAL
 ========================================================= */
 
 function closeProductFormModal() {
@@ -1473,7 +1657,7 @@ if (cancelProductBtn) {
 
 
 /* =========================================================
-   19. DELETE PRODUCT
+   20. DELETE PRODUCT
 ========================================================= */
 
 async function deleteProduct(id) {
@@ -1502,39 +1686,49 @@ async function deleteProduct(id) {
     }
 
 
-    const originalProducts = products;
+    try {
 
-    products = products.filter(function (item) {
-        return item.id !== id;
-    });
+        await productApi.delete(id);
+
+        await loadProducts();
+
+        populateMovementProductFilter();
+
+        await loadInventoryMovements(
+            getSelectedMovementProductId()
+        );
 
 
-    if (!saveProducts()) {
+        updateInventorySummary();
+        displayProducts();
 
-        products = originalProducts;
 
-        return;
+        await showAppDialog({
+            title: "Product Deleted",
+            message: `"${product.name}" has been successfully removed from your inventory.`,
+            icon: "fa-circle-check",
+            tone: "success"
+        });
+
+
+    } catch (error) {
+
+        console.error("Unable to delete product:", error);
+
+        await showAppDialog({
+            title: "Unable to Delete Product",
+            message: error.message || "Something went wrong while deleting the product. Please try again.",
+            icon: "fa-triangle-exclamation",
+            tone: "danger"
+        });
 
     }
-
-
-    updateInventorySummary();
-
-    displayProducts();
-
-
-    await showAppDialog({
-        title: "Product Deleted",
-        message: `"${product.name}" has been successfully removed from your inventory.`,
-        icon: "fa-circle-check",
-        tone: "success"
-    });
 
 }
 
 
 /* =========================================================
-   20. OPEN STOCK ADJUSTMENT MODAL
+   21. OPEN STOCK ADJUSTMENT MODAL
 ========================================================= */
 
 function openStockModal(id) {
@@ -1563,7 +1757,7 @@ function openStockModal(id) {
 
 
 /* =========================================================
-   21. SAVE STOCK ADJUSTMENT
+   22. SAVE STOCK ADJUSTMENT
 ========================================================= */
 
 if (stockForm) {
@@ -1573,13 +1767,9 @@ if (stockForm) {
         event.preventDefault();
 
         const id = stockProductId.value;
-
         const action = stockAction.value;
-
         const quantity = Number(stockQuantity.value);
-
         const reason = stockReason.value.trim();
-
 
         const product = products.find(function (item) {
             return item.id === id;
@@ -1598,7 +1788,6 @@ if (stockForm) {
 
         }
 
-
         if (
             !Number.isInteger(quantity) ||
             quantity <= 0 ||
@@ -1616,11 +1805,9 @@ if (stockForm) {
 
         }
 
-
         const originalStock = product.stock;
 
         let newStock;
-
 
         if (action === "add") {
 
@@ -1669,7 +1856,6 @@ if (stockForm) {
 
         }
 
-
         const confirmed = await showAppDialog({
             type: "confirm",
             title: "Confirm Stock Adjustment",
@@ -1708,32 +1894,54 @@ if (stockForm) {
             return;
         }
 
+        try {
 
-        product.stock = newStock;
+            // Send stock adjustment to the backend
+            const response = await productApi.adjustStock(id, {
+                action: action,
+                quantity: quantity,
+                reason: reason
+            });
 
+            if (!response.success || !response.data) {
+                throw new Error(
+                    response.message || "Unable to update product stock."
+                );
+            }
 
-        if (!saveProducts()) {
+            // Use the updated stock returned by the database
+            product.stock = Number(response.data.stock);
 
-            product.stock = originalStock;
+            // Refresh inventory display
+            updateInventorySummary();
+            displayProducts();
 
-            return;
+            // Refresh movement history after successful adjustment
+            await loadInventoryMovements(
+                getSelectedMovementProductId()
+            );
+
+            closeStockFormModal();
+
+            await showAppDialog({
+                title: "Stock Updated",
+                message: `The stock quantity for "${product.name}" has been updated successfully.`,
+                icon: "fa-circle-check",
+                tone: "success"
+            });
+
+        } catch (error) {
+
+            console.error("Stock adjustment failed:", error);
+
+            await showAppDialog({
+                title: "Stock Adjustment Failed",
+                message: error.message || "An unexpected error occurred while updating stock.",
+                icon: "fa-circle-exclamation",
+                tone: "danger"
+            });
 
         }
-
-
-        updateInventorySummary();
-
-        displayProducts();
-
-        closeStockFormModal();
-
-
-        await showAppDialog({
-            title: "Stock Updated",
-            message: `The stock quantity for "${product.name}" has been updated successfully.`,
-            icon: "fa-circle-check",
-            tone: "success"
-        });
 
     });
 
@@ -1741,7 +1949,7 @@ if (stockForm) {
 
 
 /* =========================================================
-   22. CLOSE STOCK MODAL
+   23. CLOSE STOCK MODAL
 ========================================================= */
 
 function closeStockFormModal() {
@@ -1763,7 +1971,7 @@ if (cancelStockBtn) {
 
 
 /* =========================================================
-   23. PRODUCT TABLE ACTIONS
+   24. PRODUCT TABLE ACTIONS
 ========================================================= */
 
 if (productTableBody) {
@@ -1800,7 +2008,7 @@ if (productTableBody) {
 
 
 /* =========================================================
-   24. SEARCH PRODUCTS
+   25. SEARCH PRODUCTS
 ========================================================= */
 
 if (productSearch) {
@@ -1843,7 +2051,7 @@ if (clearSearchBtn) {
 
 
 /* =========================================================
-   25. CATEGORY FILTER
+   26. CATEGORY FILTER
 ========================================================= */
 
 if (categoryFilter) {
@@ -1856,7 +2064,7 @@ if (categoryFilter) {
 
 
 /* =========================================================
-   26. STOCK STATUS FILTER
+   27. STOCK STATUS FILTER
 ========================================================= */
 
 if (stockFilter) {
@@ -1869,7 +2077,7 @@ if (stockFilter) {
 
 
 /* =========================================================
-   27. CLOSE MODALS WHEN CLICKING OUTSIDE
+   28. CLOSE MODALS WHEN CLICKING OUTSIDE
 ========================================================= */
 
 if (productModal) {
@@ -1899,7 +2107,7 @@ if (stockModal) {
 
 
 /* =========================================================
-   28. DASHBOARD-MATCHING LOGOUT MODAL
+   29. DASHBOARD-MATCHING LOGOUT MODAL
 ========================================================= */
 
 function setupLogout() {
@@ -2074,8 +2282,6 @@ function setupLogout() {
         cancelButton.addEventListener("click", closeLogoutModal);
 
 
-        // CONFIRM LOGOUT
-
         confirmButton.addEventListener("click", function () {
 
             sessionStorage.clear();
@@ -2125,7 +2331,7 @@ setupLogout();
 
 
 /* =========================================================
-   29. CLOSE ACTIVE MODAL OR SIDEBAR USING ESCAPE
+   30. CLOSE ACTIVE MODAL OR SIDEBAR USING ESCAPE
 ========================================================= */
 
 document.addEventListener("keydown", function (event) {
@@ -2134,26 +2340,22 @@ document.addEventListener("keydown", function (event) {
         return;
     }
 
-    // Custom dialog handles its own Escape key
     if (activeAppDialog) {
         return;
     }
 
-    // Close the product modal first
     if (productModal && productModal.classList.contains("show")) {
 
         requestCloseProductModal();
 
     }
 
-    // Close stock modal
     else if (stockModal && stockModal.classList.contains("show")) {
 
         closeStockFormModal();
 
     }
 
-    // Close mobile sidebar
     else if (
         isMobileView() &&
         sidebar &&
@@ -2168,16 +2370,37 @@ document.addEventListener("keydown", function (event) {
 
 
 /* =========================================================
-   30. INITIALIZE PAGE
+   31. GET SELECTED MOVEMENT PRODUCT ID
 ========================================================= */
 
-function initializeProductsPage() {
+function getSelectedMovementProductId() {
+
+    if (!movementProductFilter) {
+        return null;
+    }
+
+    const selectedProduct = movementProductFilter.value;
+
+    return selectedProduct === "all"
+        ? null
+        : selectedProduct;
+
+}
+
+
+/* =========================================================
+   32. INITIALIZE PAGE
+========================================================= */
+
+async function initializeProductsPage() {
 
     updateCurrentDateTime();
 
-    updateInventorySummary();
+    await loadProducts();
 
-    displayProducts();
+    populateMovementProductFilter();
+
+    await loadInventoryMovements();
 
 }
 

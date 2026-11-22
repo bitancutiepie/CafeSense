@@ -1,6 +1,8 @@
 require('dotenv').config();
+
 const app = require('./src/config/app');
 const config = require('./src/config');
+const db = require('./src/config/database');
 
 const server = app.listen(config.port, () => {
     console.log(`====================================================`);

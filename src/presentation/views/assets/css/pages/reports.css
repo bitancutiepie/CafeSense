@@ -1858,27 +1858,41 @@ a {
     .reports-page-content {
         width: 100%;
         max-width: none;
-
         height: auto;
         overflow: visible;
-
         padding: 0;
     }
 
+    /* Remove unnecessary spacing and forced page breaks */
     .summary-card,
     .chart-card,
-    .table-card {
-        box-shadow: none;
-        break-inside: avoid;
-    }
-
+    .table-card,
     .sales-summary-section,
     .sales-performance-section,
     .daily-sales-section,
     .product-sales-section,
     .customer-sales-section,
     .transaction-records-section {
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+        box-shadow: none;
+    }
+
+    /* Keep section headings close to their content */
+    .sales-summary-section,
+    .sales-performance-section,
+    .daily-sales-section,
+    .product-sales-section,
+    .customer-sales-section,
+    .transaction-records-section {
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+
+    /* Avoid splitting individual table rows */
+    .report-table tr {
         break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .report-table {
@@ -1886,7 +1900,6 @@ a {
     }
 
 }
-
 
 /* =========================
    22. REDUCED MOTION

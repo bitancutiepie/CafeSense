@@ -1,0 +1,39 @@
+POST http://localhost:5000/api/v1/products
+Content-Type: application/json
+
+{
+    "name": "Test Coffee",
+    "category": "Coffee",
+    "price": 100,
+    "stock": 10
+}
+
+###
+
+PUT http://localhost:5000/api/v1/products/16
+Content-Type: application/json
+
+{
+    "name": "Updated Test Coffee",
+    "category": "Coffee",
+    "price": 120,
+    "stock": 15
+}
+
+###
+
+DELETE http://localhost:5000/api/v1/products/16
+
+
+### CHECK AMERICANO STOCK
+GET http://localhost:5000/api/v1/products/1
+
+### TEST STOCK ADJUSTMENT
+PATCH http://localhost:5000/api/v1/products/1/stock
+Content-Type: application/json
+
+{
+    "action": "add",
+    "quantity": 2,
+    "reason": "Inventory Correction"
+}

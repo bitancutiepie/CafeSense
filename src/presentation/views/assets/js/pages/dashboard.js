@@ -2,19 +2,20 @@
 // CAFÉSENSE - DASHBOARD CONTROLLER
 // =========================================================
 
+import { transactionApi } from '../api/transactionApi.js';
+import { productApi } from '../api/productApi.js';
+
 
 // =========================================================
-// 1. LOCAL STORAGE
+// 1. DASHBOARD DATA
 // =========================================================
 
-const TRANSACTIONS_STORAGE_KEY = "cafeSenseTransactions";
-const PRODUCTS_STORAGE_KEY = "cafeSenseProducts";
 const SIDEBAR_STORAGE_KEY = "cafeSenseSidebarCollapsed";
-
 const LOW_STOCK_LIMIT = 10;
 
 let transactions = [];
 let products = [];
+let dashboardDataLoadError = false;
 
 
 // =========================================================
@@ -26,37 +27,39 @@ let paymentChart;
 let customerChart;
 
 
+// Register Chart.js DataLabels plugin.
+
+if (
+    typeof Chart !== "undefined" &&
+    typeof ChartDataLabels !== "undefined"
+) {
+    Chart.register(ChartDataLabels);
+}
+
+
 // =========================================================
 // 3. INITIALIZE DASHBOARD
 // =========================================================
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
-    loadDashboardData();
+    await loadDashboardData();
 
     setCurrentDate();
-
     setupSidebar();
-
     setupAnalyticsDropdown();
-
     setupLogout();
 
     renderHourlySalesChart();
-
     renderPaymentMethodsChart();
-
     renderCustomerTypesChart();
-
 
     const filterBtn = document.getElementById("filterBtn");
     const resetBtn = document.getElementById("resetBtn");
 
-
     if (filterBtn) {
         filterBtn.addEventListener("click", applyFilters);
     }
-
 
     if (resetBtn) {
 
@@ -79,71 +82,58 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
-
-    window.addEventListener("storage", function (event) {
-
-        if (
-            event.key === TRANSACTIONS_STORAGE_KEY ||
-            event.key === PRODUCTS_STORAGE_KEY ||
-            event.key === null
-        ) {
-
-            loadDashboardData();
-
-            applyFilters();
-
-        }
-
-    });
-
-
     applyFilters();
 
 });
 
 
 // =========================================================
-// 4. LOAD DASHBOARD DATA
+// 4. LOAD DASHBOARD DATA FROM DATABASE
 // =========================================================
 
-function loadDashboardData() {
+async function loadDashboardData() {
 
     try {
 
-        const savedTransactions = localStorage.getItem(
-            TRANSACTIONS_STORAGE_KEY
-        );
+        const [transactionResponse, productResponse] =
+            await Promise.all([
+                transactionApi.getAll(),
+                productApi.getAll()
+            ]);
 
-        const savedProducts = localStorage.getItem(
-            PRODUCTS_STORAGE_KEY
-        );
+        const databaseTransactions = transactionResponse.data;
+        const databaseProducts = productResponse.data;
 
-
-        transactions = savedTransactions
-            ? JSON.parse(savedTransactions)
-            : [];
-
-        products = savedProducts
-            ? JSON.parse(savedProducts)
-            : [];
-
-
-        if (!Array.isArray(transactions)) {
-            transactions = [];
+        if (
+            !Array.isArray(databaseTransactions) ||
+            !Array.isArray(databaseProducts)
+        ) {
+            throw new Error("Invalid data received from the API.");
         }
 
-        if (!Array.isArray(products)) {
-            products = [];
-        }
+        transactions = databaseTransactions;
+        products = databaseProducts;
 
-    }
+        dashboardDataLoadError = false;
 
-    catch (error) {
+        console.log(
+            "Dashboard transactions loaded:",
+            transactions.length
+        );
 
-        console.error("Error loading Dashboard data:", error);
+        console.log(
+            "Dashboard products loaded:",
+            products.length
+        );
+
+    } catch (error) {
+
+        console.error("Unable to load Dashboard data:", error);
 
         transactions = [];
         products = [];
+
+        dashboardDataLoadError = true;
 
     }
 
@@ -157,48 +147,34 @@ function loadDashboardData() {
 function setCurrentDate() {
 
     const dateElement = document.getElementById("current-date");
-
     const timeElement = document.getElementById("current-time");
-
 
     function updateDateTime() {
 
         const now = new Date();
 
-
         if (dateElement) {
 
             dateElement.textContent = now.toLocaleDateString("en-PH", {
-
                 weekday: "long",
-
                 month: "long",
-
                 day: "numeric",
-
                 year: "numeric"
-
             }).toUpperCase();
 
         }
 
-
         if (timeElement) {
 
             timeElement.textContent = now.toLocaleTimeString("en-PH", {
-
                 hour: "numeric",
-
                 minute: "2-digit",
-
                 hour12: true
-
             });
 
         }
 
     }
-
 
     updateDateTime();
 
@@ -217,31 +193,24 @@ function parseTransactionDate(dateString) {
         return null;
     }
 
-
     let parsedDate = new Date(dateString);
-
 
     if (!isNaN(parsedDate.getTime())) {
         return parsedDate;
     }
-
 
     const normalizedDate = String(dateString)
         .replace(/\s+at\s+/i, ", ");
 
-
     parsedDate = new Date(normalizedDate);
-
 
     if (!isNaN(parsedDate.getTime())) {
         return parsedDate;
     }
 
-
     const numericMatch = normalizedDate.match(
         /^(\d{1,2})\/(\d{1,2})\/(\d{4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i
     );
-
 
     if (numericMatch) {
 
@@ -256,15 +225,11 @@ function parseTransactionDate(dateString) {
 
         const period = numericMatch[7].toUpperCase();
 
-
         if (period === "PM" && hour !== 12) {
             hour += 12;
-        }
-
-        else if (period === "AM" && hour === 12) {
+        } else if (period === "AM" && hour === 12) {
             hour = 0;
         }
-
 
         parsedDate = new Date(
             year,
@@ -275,27 +240,24 @@ function parseTransactionDate(dateString) {
             second
         );
 
-
         if (!isNaN(parsedDate.getTime())) {
             return parsedDate;
         }
 
     }
 
-
     return null;
 
 }
 
 
-// PRIORITIZE dateISO, THEN FALL BACK TO date.
+// Prioritize dateISO, then fall back to date.
 
 function getTransactionDate(transaction) {
 
     if (!transaction) {
         return null;
     }
-
 
     return (
         parseTransactionDate(transaction.dateISO) ||
@@ -310,18 +272,15 @@ function getTransactionDate(transaction) {
 function getLocalDateKey(date) {
 
     const year = date.getFullYear();
-
     const month = String(date.getMonth() + 1).padStart(2, "0");
-
     const day = String(date.getDate()).padStart(2, "0");
-
 
     return `${year}-${month}-${day}`;
 
 }
 
 
-// Get transaction hour using dateISO first.
+// Get transaction hour.
 
 function getTransactionHour(transaction) {
 
@@ -342,7 +301,6 @@ function getTransactionCustomerTypes(transaction) {
 
     const customerTypes = new Set();
 
-
     if (Array.isArray(transaction.customerTypes)) {
 
         transaction.customerTypes.forEach(function (type) {
@@ -354,7 +312,6 @@ function getTransactionCustomerTypes(transaction) {
         });
 
     }
-
 
     if (Array.isArray(transaction.items)) {
 
@@ -368,7 +325,6 @@ function getTransactionCustomerTypes(transaction) {
 
     }
 
-
     return Array.from(customerTypes);
 
 }
@@ -381,23 +337,17 @@ function getTransactionCustomerTypes(transaction) {
 function applyFilters() {
 
     const dateFilter = document.getElementById("dateFilter");
-
     const customerFilter = document.getElementById("customerFilter");
-
 
     if (!dateFilter || !customerFilter) {
         return;
     }
 
-
     const selectedDate = dateFilter.value;
-
     const selectedCustomer = customerFilter.value;
 
     const now = new Date();
-
     const todayKey = getLocalDateKey(now);
-
 
     const todayStart = new Date(
         now.getFullYear(),
@@ -405,44 +355,25 @@ function applyFilters() {
         now.getDate()
     );
 
-
     const weekAgo = new Date(todayStart);
-
     weekAgo.setDate(weekAgo.getDate() - 6);
 
-
-    const filteredData = transactions.filter(function (transaction) {
-
-        // Use dateISO first, then date as fallback.
+    const filteredData = transactions.flatMap(function (transaction) {
 
         const transactionDate = getTransactionDate(transaction);
 
-        let dateMatch = true;
-
-
-        const transactionCustomerTypes =
-            getTransactionCustomerTypes(transaction);
-
-
-        const customerMatch =
-            selectedCustomer === "all" ||
-            transactionCustomerTypes.includes(selectedCustomer);
-
-
         if (!transactionDate) {
-
-            dateMatch = false;
-
+            return [];
         }
 
-        else if (selectedDate === "today") {
+        let dateMatch = true;
+
+        if (selectedDate === "today") {
 
             dateMatch =
                 getLocalDateKey(transactionDate) === todayKey;
 
-        }
-
-        else if (selectedDate === "week") {
+        } else if (selectedDate === "week") {
 
             const transactionDay = new Date(
                 transactionDate.getFullYear(),
@@ -450,14 +381,11 @@ function applyFilters() {
                 transactionDate.getDate()
             );
 
-
             dateMatch =
                 transactionDay >= weekAgo &&
                 transactionDay <= todayStart;
 
-        }
-
-        else if (selectedDate === "month") {
+        } else if (selectedDate === "month") {
 
             dateMatch =
                 transactionDate.getMonth() === now.getMonth() &&
@@ -465,11 +393,94 @@ function applyFilters() {
 
         }
 
+        if (!dateMatch) {
+            return [];
+        }
 
-        return dateMatch && customerMatch;
+        // Keep the complete transaction when All Customers is selected.
+
+        if (selectedCustomer === "all") {
+            return [transaction];
+        }
+
+        // Filter items belonging to the selected customer type.
+
+        const matchingItems = Array.isArray(transaction.items)
+            ? transaction.items.filter(function (item) {
+
+                return String(item.customerType || "").trim() === selectedCustomer;
+
+            })
+            : [];
+
+        if (matchingItems.length === 0) {
+            return [];
+        }
+
+        // Recalculate subtotal, discount, and total for matching items.
+
+        const customerTypeSubtotal = matchingItems.reduce(
+            function (total, item) {
+
+                const lineSubtotal =
+                    item.lineSubtotal !== undefined &&
+                    item.lineSubtotal !== null
+                        ? Number(item.lineSubtotal)
+                        : (Number(item.price) || 0) *
+                          (Number(item.quantity) || 0);
+
+                return total + lineSubtotal;
+
+            },
+            0
+        );
+
+        const customerTypeDiscount = matchingItems.reduce(
+            function (total, item) {
+
+                return total + (Number(item.lineDiscount) || 0);
+
+            },
+            0
+        );
+
+        const customerTypeTotal = matchingItems.reduce(
+            function (total, item) {
+
+                const lineSubtotal =
+                    item.lineSubtotal !== undefined &&
+                    item.lineSubtotal !== null
+                        ? Number(item.lineSubtotal)
+                        : (Number(item.price) || 0) *
+                          (Number(item.quantity) || 0);
+
+                const lineDiscount =
+                    Number(item.lineDiscount) || 0;
+
+                const lineTotal =
+                    item.lineTotal !== undefined &&
+                    item.lineTotal !== null
+                        ? Number(item.lineTotal)
+                        : lineSubtotal - lineDiscount;
+
+                return total + lineTotal;
+
+            },
+            0
+        );
+
+        // Return a filtered copy without changing the original transaction.
+
+        return [{
+            ...transaction,
+            items: matchingItems,
+            customerTypes: [selectedCustomer],
+            subtotal: customerTypeSubtotal,
+            discount: customerTypeDiscount,
+            total: customerTypeTotal
+        }];
 
     });
-
 
     updateDashboard(filteredData);
 
@@ -483,51 +494,37 @@ function applyFilters() {
 function updateDashboard(data) {
 
     const totalRevenue = data.reduce(
-
         function (total, transaction) {
 
             return total + (Number(transaction.total) || 0);
 
         },
-
         0
-
     );
-
 
     const totalTransactions = data.length;
 
-
     const totalItemsSold = data.reduce(
-
         function (total, transaction) {
 
             if (!Array.isArray(transaction.items)) {
                 return total;
             }
 
-
             const transactionQuantity = transaction.items.reduce(
-
                 function (itemTotal, item) {
 
                     return itemTotal + (Number(item.quantity) || 0);
 
                 },
-
                 0
-
             );
-
 
             return total + transactionQuantity;
 
         },
-
         0
-
     );
-
 
     const averageOrderValue =
         totalTransactions > 0
@@ -535,8 +532,9 @@ function updateDashboard(data) {
             : 0;
 
 
-    const productSummary = {};
+    // PRODUCT SUMMARY
 
+    const productSummary = {};
 
     data.forEach(function (transaction) {
 
@@ -544,13 +542,10 @@ function updateDashboard(data) {
             return;
         }
 
-
         transaction.items.forEach(function (item) {
 
             const productName = item.name || "Unknown Product";
-
             const quantity = Number(item.quantity) || 0;
-
 
             productSummary[productName] =
                 (productSummary[productName] || 0) + quantity;
@@ -559,18 +554,17 @@ function updateDashboard(data) {
 
     });
 
-
     const topProduct = getTopEntry(productSummary);
 
 
-    const customerSummary = {};
+    // CUSTOMER SUMMARY
 
+    const customerSummary = {};
 
     data.forEach(function (transaction) {
 
         const customerTypes =
             getTransactionCustomerTypes(transaction);
-
 
         customerTypes.forEach(function (type) {
 
@@ -581,67 +575,59 @@ function updateDashboard(data) {
 
     });
 
-
     const topCustomer = getTopEntry(customerSummary);
 
 
-    const paymentSummary = {};
+    // PAYMENT SUMMARY
 
+    const paymentSummary = {};
 
     data.forEach(function (transaction) {
 
         const paymentMethod =
             transaction.paymentMethod || "Unknown";
 
-
         paymentSummary[paymentMethod] =
             (paymentSummary[paymentMethod] || 0) + 1;
 
     });
 
-
     const topPayment = getTopEntry(paymentSummary);
 
 
-    const hourSummary = {};
+    // HOURLY SUMMARY
 
+    const hourSummary = {};
 
     data.forEach(function (transaction) {
 
         const hour = getTransactionHour(transaction);
 
-
         if (hour === null) {
             return;
         }
-
 
         hourSummary[hour] =
             (hourSummary[hour] || 0) + 1;
 
     });
 
-
     const peakHour = getTopEntry(hourSummary);
 
 
-    setText(
-        "totalRevenueValue",
-        formatCurrency(totalRevenue)
-    );
+    // UPDATE SUMMARY CARDS
 
+    setText("totalRevenueValue", formatCurrency(totalRevenue));
 
     setText(
         "totalTransactionsValue",
         totalTransactions.toLocaleString("en-PH")
     );
 
-
     setText(
         "averageOrderValue",
         formatCurrency(averageOrderValue)
     );
-
 
     setText(
         "totalItemsSoldValue",
@@ -649,11 +635,12 @@ function updateDashboard(data) {
     );
 
 
+    // UPDATE BUSINESS INSIGHTS
+
     setText(
         "glanceTopProduct",
         topProduct ? topProduct[0] : "N/A"
     );
-
 
     setText(
         "glanceTopProductCount",
@@ -662,12 +649,10 @@ function updateDashboard(data) {
             : "0 units sold"
     );
 
-
     setText(
         "glanceTopCustomer",
         topCustomer ? topCustomer[0] : "N/A"
     );
-
 
     setText(
         "glanceTopCustomerCount",
@@ -676,12 +661,10 @@ function updateDashboard(data) {
             : "0 transactions"
     );
 
-
     setText(
         "glanceTopPayment",
         topPayment ? topPayment[0] : "N/A"
     );
-
 
     setText(
         "glanceTopPaymentCount",
@@ -689,7 +672,6 @@ function updateDashboard(data) {
             ? `${topPayment[1]} transactions`
             : "0 transactions"
     );
-
 
     setText(
         "glancePeakHour",
@@ -699,14 +681,12 @@ function updateDashboard(data) {
     );
 
 
+    // UPDATE DASHBOARD SECTIONS
+
     updateRecentTransactions(data);
-
     updateBusinessAlerts();
-
     updateHourlyChart(data);
-
     updatePaymentChart(data);
-
     updateCustomerChart(data);
 
 }
@@ -720,16 +700,12 @@ function getTopEntry(object) {
 
     const entries = Object.entries(object);
 
-
     if (entries.length === 0) {
         return null;
     }
 
-
     return entries.sort(function (a, b) {
-
         return b[1] - a[1];
-
     })[0];
 
 }
@@ -738,7 +714,6 @@ function getTopEntry(object) {
 function setText(elementId, value) {
 
     const element = document.getElementById(elementId);
-
 
     if (element) {
         element.textContent = value;
@@ -750,10 +725,8 @@ function setText(elementId, value) {
 function formatCurrency(amount) {
 
     return "₱" + Number(amount || 0).toLocaleString("en-PH", {
-
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-
     });
 
 }
@@ -762,34 +735,25 @@ function formatCurrency(amount) {
 function formatHour(hour) {
 
     const start = new Date();
-
     start.setHours(hour, 0, 0, 0);
 
-
     const end = new Date();
-
     end.setHours((hour + 1) % 24, 0, 0, 0);
 
-
     return start.toLocaleTimeString("en-US", {
-
         hour: "numeric"
-
     }) + " – " + end.toLocaleTimeString("en-US", {
-
         hour: "numeric"
-
     });
 
 }
 
 
-// Format transaction date using dateISO first.
+// Format transaction date.
 
 function formatTransactionDate(transaction) {
 
     const date = getTransactionDate(transaction);
-
 
     if (!date) {
 
@@ -799,23 +763,16 @@ function formatTransactionDate(transaction) {
 
     }
 
-
     const formattedDate = date.toLocaleDateString("en-PH", {
-
         month: "short",
         day: "numeric",
         year: "numeric"
-
     });
-
 
     const formattedTime = date.toLocaleTimeString("en-PH", {
-
         hour: "numeric",
         minute: "2-digit"
-
     });
-
 
     return `${formattedDate} · ${formattedTime}`;
 
@@ -827,15 +784,12 @@ function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, function (character) {
 
         const entities = {
-
             "&": "&amp;",
             "<": "&lt;",
             ">": "&gt;",
             '"': "&quot;",
             "'": "&#039;"
-
         };
-
 
         return entities[character];
 
@@ -852,23 +806,16 @@ function updateRecentTransactions(data) {
 
     const tableBody = document.getElementById("recentTransactionsBody");
 
-
     if (!tableBody) {
         return;
     }
 
-
     const recentTransactions = data
-
         .slice()
-
         .sort(function (a, b) {
-
-            // Sort using dateISO first, then date.
 
             const dateA = getTransactionDate(a);
             const dateB = getTransactionDate(b);
-
 
             if (!dateA) {
                 return 1;
@@ -878,28 +825,20 @@ function updateRecentTransactions(data) {
                 return -1;
             }
 
-
             return dateB.getTime() - dateA.getTime();
 
         })
-
         .slice(0, 5);
 
 
     if (recentTransactions.length === 0) {
 
         tableBody.innerHTML = `
-
             <tr>
-
                 <td colspan="5" class="empty-table-message">
-
                     No transactions found for the selected filters.
-
                 </td>
-
             </tr>
-
         `;
 
         return;
@@ -909,7 +848,7 @@ function updateRecentTransactions(data) {
 
     tableBody.innerHTML = recentTransactions.map(function (transaction) {
 
-        const transactionId = transaction.id || "N/A";
+        const transactionId = transaction.transactionId ?? "N/A";
 
         const customerTypes =
             getTransactionCustomerTypes(transaction);
@@ -919,26 +858,16 @@ function updateRecentTransactions(data) {
             : "N/A";
 
         const paymentMethod = transaction.paymentMethod || "N/A";
-
         const total = Number(transaction.total) || 0;
 
-
         return `
-
             <tr>
-
                 <td>${escapeHTML(transactionId)}</td>
-
                 <td>${formatTransactionDate(transaction)}</td>
-
                 <td>${escapeHTML(customerDisplay)}</td>
-
                 <td>${escapeHTML(paymentMethod)}</td>
-
                 <td>${formatCurrency(total)}</td>
-
             </tr>
-
         `;
 
     }).join("");
@@ -954,18 +883,13 @@ function updateBusinessAlerts() {
 
     const alertsContainer = document.getElementById("businessAlertsList");
 
-
     if (!alertsContainer) {
         return;
     }
 
-
     const outOfStockProducts = products.filter(function (product) {
-
         return Number(product.stock) === 0;
-
     });
-
 
     const lowStockProducts = products.filter(function (product) {
 
@@ -975,20 +899,15 @@ function updateBusinessAlerts() {
 
     });
 
-
     const alerts = [];
 
 
     outOfStockProducts.forEach(function (product) {
 
         alerts.push({
-
             type: "danger",
-
             title: `${product.name} is out of stock`,
-
             message: "Restock this product before accepting new orders."
-
         });
 
     });
@@ -997,13 +916,9 @@ function updateBusinessAlerts() {
     lowStockProducts.forEach(function (product) {
 
         alerts.push({
-
             type: "warning",
-
             title: `${product.name} has low stock`,
-
             message: `Only ${product.stock} units remaining.`
-
         });
 
     });
@@ -1014,53 +929,38 @@ function updateBusinessAlerts() {
         if (products.length === 0) {
 
             alertsContainer.innerHTML = `
-
                 <div class="alert-item">
-
                     <div class="alert-icon">
                         <i class="fa-solid fa-circle-info"></i>
                     </div>
 
                     <div class="alert-content">
-
                         <strong>Inventory Not Available</strong>
-
                         <p>
                             Product stock information will appear here
                             once products are added to Inventory.
                         </p>
-
                     </div>
-
                 </div>
-
             `;
 
             return;
 
         }
 
-
         alertsContainer.innerHTML = `
-
             <div class="alert-item success">
-
                 <div class="alert-icon">
                     <i class="fa-solid fa-circle-check"></i>
                 </div>
 
                 <div class="alert-content">
-
                     <strong>Inventory is in good condition</strong>
-
                     <p>
                         No low-stock or out-of-stock products detected.
                     </p>
-
                 </div>
-
             </div>
-
         `;
 
         return;
@@ -1074,25 +974,17 @@ function updateBusinessAlerts() {
             ? "fa-circle-xmark"
             : "fa-triangle-exclamation";
 
-
         return `
-
             <div class="alert-item ${alert.type}">
-
                 <div class="alert-icon">
                     <i class="fa-solid ${icon}"></i>
                 </div>
 
                 <div class="alert-content">
-
                     <strong>${escapeHTML(alert.title)}</strong>
-
                     <p>${escapeHTML(alert.message)}</p>
-
                 </div>
-
             </div>
-
         `;
 
     }).join("");
@@ -1108,11 +1000,9 @@ function renderHourlySalesChart() {
 
     const canvas = document.getElementById("hourlySalesChart");
 
-
     if (!canvas || typeof Chart === "undefined") {
         return;
     }
-
 
     hourlyChart = new Chart(canvas, {
 
@@ -1121,40 +1011,27 @@ function renderHourlySalesChart() {
         data: {
 
             labels: [
-
                 "8 AM", "9 AM", "10 AM", "11 AM",
                 "12 PM", "1 PM", "2 PM", "3 PM",
                 "4 PM", "5 PM", "6 PM"
-
             ],
 
             datasets: [{
-
                 label: "Sales",
-
                 data: [],
-
                 backgroundColor: "#b97845",
-
                 hoverBackgroundColor: "#35231c",
-
                 borderRadius: 7,
-
                 borderSkipped: false,
-
                 maxBarThickness: 32
-
             }]
 
         },
 
-
         options: {
 
             responsive: true,
-
             maintainAspectRatio: false,
-
 
             plugins: {
 
@@ -1162,21 +1039,42 @@ function renderHourlySalesChart() {
                     display: false
                 },
 
+                // Peso labels above the bars.
+
+                datalabels: {
+
+                    display: function (context) {
+                        return Number(context.dataset.data[context.dataIndex]) > 0;
+                    },
+
+                    anchor: "end",
+                    align: "top",
+                    clamp: true,
+
+                    formatter: function (value) {
+                        return formatCurrency(value);
+                    },
+
+                    color: "#35231c",
+
+                    font: {
+                        family: "DM Sans",
+                        size: 10,
+                        weight: "600"
+                    }
+
+                },
 
                 tooltip: {
 
                     backgroundColor: "#35231c",
-
                     padding: 12,
-
 
                     callbacks: {
 
                         label: function (context) {
-
                             return " Sales: " +
                                 formatCurrency(context.parsed.y);
-
                         }
 
                     }
@@ -1185,13 +1083,11 @@ function renderHourlySalesChart() {
 
             },
 
-
             scales: {
 
                 y: {
 
                     beginAtZero: true,
-
 
                     ticks: {
 
@@ -1203,32 +1099,23 @@ function renderHourlySalesChart() {
                         },
 
                         callback: function (value) {
-
-                            return "₱" +
-                                value.toLocaleString("en-PH");
-
+                            return "₱" + value.toLocaleString("en-PH");
                         }
 
                     },
 
-
                     grid: {
-
                         color: "#f1ebe5",
-
                         drawBorder: false
-
                     }
 
                 },
-
 
                 x: {
 
                     grid: {
                         display: false
                     },
-
 
                     ticks: {
 
@@ -1258,18 +1145,13 @@ function updateHourlyChart(data) {
         return;
     }
 
-
     const hourlySales = Array(11).fill(0);
-
 
     data.forEach(function (transaction) {
 
-        // Get hour using dateISO first.
-
         const hour = getTransactionHour(transaction);
 
-
-        if (hour >= 8 && hour <= 18) {
+        if (hour !== null && hour >= 8 && hour <= 18) {
 
             hourlySales[hour - 8] +=
                 Number(transaction.total) || 0;
@@ -1277,7 +1159,6 @@ function updateHourlyChart(data) {
         }
 
     });
-
 
     hourlyChart.data.datasets[0].data = hourlySales;
 
@@ -1294,11 +1175,9 @@ function renderPaymentMethodsChart() {
 
     const canvas = document.getElementById("paymentMethodsChart");
 
-
     if (!canvas || typeof Chart === "undefined") {
         return;
     }
-
 
     paymentChart = new Chart(canvas, {
 
@@ -1313,35 +1192,26 @@ function renderPaymentMethodsChart() {
                 data: [0, 0, 0, 0],
 
                 backgroundColor: [
-
                     "#35231c",
                     "#b97845",
                     "#d9a57b",
                     "#e8d9ca"
-
                 ],
 
                 borderWidth: 3,
-
                 borderColor: "#ffffff",
-
                 hoverOffset: 8,
-
                 spacing: 3
 
             }]
 
         },
 
-
         options: {
 
             responsive: true,
-
             maintainAspectRatio: false,
-
             cutout: "70%",
-
 
             plugins: {
 
@@ -1349,23 +1219,17 @@ function renderPaymentMethodsChart() {
 
                     position: "bottom",
 
-
                     labels: {
 
                         usePointStyle: true,
-
                         pointStyle: "circle",
-
                         boxWidth: 8,
-
                         padding: 18,
-
 
                         font: {
                             family: "DM Sans",
                             size: 11
                         },
-
 
                         color: "#2b201b"
 
@@ -1373,6 +1237,56 @@ function renderPaymentMethodsChart() {
 
                 },
 
+                // Percentage labels inside the doughnut.
+
+                datalabels: {
+
+                    display: function (context) {
+
+                        const values = context.dataset.data;
+
+                        const total = values.reduce(
+                            (sum, value) => sum + Number(value || 0),
+                            0
+                        );
+
+                        return (
+                            total > 0 &&
+                            Number(context.dataset.data[context.dataIndex]) > 0
+                        );
+
+                    },
+
+                    formatter: function (value, context) {
+
+                        const values = context.dataset.data;
+
+                        const total = values.reduce(
+                            (sum, item) => sum + Number(item || 0),
+                            0
+                        );
+
+                        if (total === 0) {
+                            return "";
+                        }
+
+                        return `${(Number(value) / total * 100).toFixed(1)}%`;
+
+                    },
+
+                    color: "#ffffff",
+
+                    font: {
+                        family: "DM Sans",
+                        size: 11,
+                        weight: "600"
+                    },
+
+                    anchor: "center",
+                    align: "center",
+                    clamp: true
+
+                },
 
                 tooltip: {
 
@@ -1404,28 +1318,19 @@ function updatePaymentChart(data) {
         return;
     }
 
-
     const paymentMethods = ["Cash", "GCash", "Maya", "Card"];
-
 
     const paymentTotals = paymentMethods.map(function (method) {
 
         return data
-
             .filter(function (transaction) {
-
                 return transaction.paymentMethod === method;
-
             })
-
             .reduce(function (total, transaction) {
-
                 return total + (Number(transaction.total) || 0);
-
             }, 0);
 
     });
-
 
     paymentChart.data.datasets[0].data = paymentTotals;
 
@@ -1442,11 +1347,9 @@ function renderCustomerTypesChart() {
 
     const canvas = document.getElementById("customerTypesChart");
 
-
     if (!canvas || typeof Chart === "undefined") {
         return;
     }
-
 
     customerChart = new Chart(canvas, {
 
@@ -1455,11 +1358,9 @@ function renderCustomerTypesChart() {
         data: {
 
             labels: [
-
                 "Senior/PWD",
                 "Student",
                 "General Customer"
-
             ],
 
             datasets: [{
@@ -1467,34 +1368,25 @@ function renderCustomerTypesChart() {
                 data: [0, 0, 0],
 
                 backgroundColor: [
-
                     "#b97845",
                     "#82917b",
                     "#49352c"
-
                 ],
 
                 borderWidth: 3,
-
                 borderColor: "#ffffff",
-
                 hoverOffset: 8,
-
                 spacing: 3
 
             }]
 
         },
 
-
         options: {
 
             responsive: true,
-
             maintainAspectRatio: false,
-
             cutout: "70%",
-
 
             plugins: {
 
@@ -1502,27 +1394,72 @@ function renderCustomerTypesChart() {
 
                     position: "bottom",
 
-
                     labels: {
 
                         usePointStyle: true,
-
                         pointStyle: "circle",
-
                         boxWidth: 8,
-
                         padding: 15,
-
 
                         font: {
                             family: "DM Sans",
                             size: 11
                         },
 
-
                         color: "#2b201b"
 
                     }
+
+                },
+
+                // Percentage labels inside the doughnut.
+
+                datalabels: {
+
+                    display: function (context) {
+
+                        const values = context.dataset.data;
+
+                        const total = values.reduce(
+                            (sum, value) => sum + Number(value || 0),
+                            0
+                        );
+
+                        return (
+                            total > 0 &&
+                            Number(context.dataset.data[context.dataIndex]) > 0
+                        );
+
+                    },
+
+                    formatter: function (value, context) {
+
+                        const values = context.dataset.data;
+
+                        const total = values.reduce(
+                            (sum, item) => sum + Number(item || 0),
+                            0
+                        );
+
+                        if (total === 0) {
+                            return "";
+                        }
+
+                        return `${(Number(value) / total * 100).toFixed(1)}%`;
+
+                    },
+
+                    color: "#ffffff",
+
+                    font: {
+                        family: "DM Sans",
+                        size: 11,
+                        weight: "600"
+                    },
+
+                    anchor: "center",
+                    align: "center",
+                    clamp: true
 
                 }
 
@@ -1541,15 +1478,11 @@ function updateCustomerChart(data) {
         return;
     }
 
-
     const customerTypes = [
-
         "Senior/PWD",
         "Student",
         "General Customer"
-
     ];
-
 
     const customerCounts = customerTypes.map(function (type) {
 
@@ -1558,13 +1491,11 @@ function updateCustomerChart(data) {
             const transactionCustomerTypes =
                 getTransactionCustomerTypes(transaction);
 
-
             return transactionCustomerTypes.includes(type);
 
         }).length;
 
     });
-
 
     customerChart.data.datasets[0].data = customerCounts;
 
@@ -1581,15 +1512,14 @@ function setupSidebar() {
 
     const sidebar = document.getElementById("sidebar");
 
-    // DESKTOP HAMBURGER INSIDE SIDEBAR
-    const desktopToggleButton = document.getElementById("sidebarToggle");
+    const desktopToggleButton =
+        document.getElementById("sidebarToggle");
 
-    // MOBILE HAMBURGER IN MAIN HEADER
-    const mobileToggleButton = document.getElementById("mobileSidebarToggle");
+    const mobileToggleButton =
+        document.getElementById("mobileSidebarToggle");
 
-    // MOBILE X BUTTON
-    const closeButton = document.getElementById("sidebarClose");
-
+    const closeButton =
+        document.getElementById("sidebarClose");
 
     if (!sidebar) {
         return;
@@ -1604,9 +1534,7 @@ function setupSidebar() {
 
             return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error("Unable to read sidebar state:", error);
 
@@ -1628,9 +1556,7 @@ function setupSidebar() {
                 String(isCollapsed)
             );
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error("Unable to save sidebar state:", error);
 
@@ -1690,29 +1616,21 @@ function setupSidebar() {
             const isCollapsed = getSavedSidebarState();
 
             sidebar.classList.remove("mobile-open");
-
             sidebar.classList.toggle("collapsed", isCollapsed);
 
             document.body.classList.remove("sidebar-overlay-active");
 
             updateDesktopToggleState(!isCollapsed);
-
             updateMobileToggleState(false);
 
-        }
-
-        else {
-
-            // Mobile always uses the full-width slide-out sidebar.
+        } else {
 
             sidebar.classList.remove("collapsed");
-
             sidebar.classList.remove("mobile-open");
 
             document.body.classList.remove("sidebar-overlay-active");
 
             updateDesktopToggleState(true);
-
             updateMobileToggleState(false);
 
         }
@@ -1723,27 +1641,20 @@ function setupSidebar() {
     initializeSidebar();
 
 
-    // =====================================================
     // DESKTOP HAMBURGER
-    // =====================================================
 
     if (desktopToggleButton) {
 
         desktopToggleButton.addEventListener("click", function () {
 
-            // Desktop toggle must not control the mobile drawer.
-
             if (window.innerWidth <= 850) {
                 return;
             }
 
-
             const shouldCollapse =
                 !sidebar.classList.contains("collapsed");
 
-
             sidebar.classList.toggle("collapsed", shouldCollapse);
-
 
             saveSidebarState(shouldCollapse);
 
@@ -1754,9 +1665,7 @@ function setupSidebar() {
     }
 
 
-    // =====================================================
     // MOBILE HAMBURGER
-    // =====================================================
 
     if (mobileToggleButton) {
 
@@ -1766,19 +1675,15 @@ function setupSidebar() {
                 return;
             }
 
-
             const isOpening =
                 !sidebar.classList.contains("mobile-open");
 
-
             sidebar.classList.toggle("mobile-open", isOpening);
-
 
             document.body.classList.toggle(
                 "sidebar-overlay-active",
                 isOpening
             );
-
 
             updateMobileToggleState(isOpening);
 
@@ -1787,9 +1692,7 @@ function setupSidebar() {
     }
 
 
-    // =====================================================
     // MOBILE X BUTTON
-    // =====================================================
 
     if (closeButton) {
 
@@ -1809,23 +1712,16 @@ function setupSidebar() {
     }
 
 
-    // =====================================================
-    // CLOSE WHEN CLICKING OUTSIDE THE SIDEBAR ON MOBILE
-    // =====================================================
+    // CLOSE WHEN CLICKING OUTSIDE THE SIDEBAR
 
     document.addEventListener("click", function (event) {
 
         if (
-
             window.innerWidth <= 850 &&
-
             sidebar.classList.contains("mobile-open") &&
-
             !sidebar.contains(event.target) &&
-
             !(mobileToggleButton &&
                 mobileToggleButton.contains(event.target))
-
         ) {
 
             closeMobileSidebar(
@@ -1838,14 +1734,9 @@ function setupSidebar() {
     });
 
 
-    // =====================================================
     // CLOSE AFTER NAVIGATION ON MOBILE
-    // =====================================================
 
-    const navigationLinks = sidebar.querySelectorAll(
-        "a.nav-item"
-    );
-
+    const navigationLinks = sidebar.querySelectorAll("a.nav-item");
 
     navigationLinks.forEach(function (link) {
 
@@ -1865,20 +1756,14 @@ function setupSidebar() {
     });
 
 
-    // =====================================================
     // ESCAPE KEY
-    // =====================================================
 
     document.addEventListener("keydown", function (event) {
 
         if (
-
             event.key === "Escape" &&
-
             window.innerWidth <= 850 &&
-
             sidebar.classList.contains("mobile-open")
-
         ) {
 
             closeMobileSidebar(
@@ -1891,14 +1776,10 @@ function setupSidebar() {
     });
 
 
-    // =====================================================
     // HANDLE SCREEN RESIZING
-    // =====================================================
 
     window.addEventListener("resize", function () {
-
         initializeSidebar();
-
     });
 
 }
@@ -1920,28 +1801,16 @@ function setupAnalyticsDropdown() {
         "analyticsNavList"
     );
 
-
     if (!sidebar || !dropdownToggle || !analyticsNavList) {
         return;
     }
 
-
     dropdownToggle.addEventListener("click", function () {
-
-        /*
-           DESKTOP COLLAPSED SIDEBAR
-
-           The Analytics dropdown remains functional.
-           It displays submenu icons only.
-           The sidebar does not expand automatically.
-        */
 
         const isCurrentlyCollapsed =
             analyticsNavList.classList.contains("collapsed");
 
-
         analyticsNavList.classList.toggle("collapsed");
-
 
         dropdownToggle.setAttribute(
             "aria-expanded",
@@ -1963,25 +1832,14 @@ function closeMobileSidebar(sidebar, toggleButton) {
         return;
     }
 
-
     sidebar.classList.remove("mobile-open");
 
-    document.body.classList.remove(
-        "sidebar-overlay-active"
-    );
-
+    document.body.classList.remove("sidebar-overlay-active");
 
     if (toggleButton) {
 
-        toggleButton.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-
-        toggleButton.setAttribute(
-            "title",
-            "Open Sidebar"
-        );
+        toggleButton.setAttribute("aria-expanded", "false");
+        toggleButton.setAttribute("title", "Open Sidebar");
 
     }
 
@@ -1996,11 +1854,9 @@ function setupLogout() {
 
     const logoutButton = document.getElementById("logout-btn");
 
-
     if (!logoutButton) {
         return;
     }
-
 
     let logoutModal = null;
 
@@ -2013,19 +1869,16 @@ function setupLogout() {
             return;
         }
 
-
         const modalToClose = logoutModal;
 
         modalToClose.classList.remove("show");
 
         document.body.classList.remove("logout-modal-open");
 
-
         document.removeEventListener(
             "keydown",
             handleLogoutModalKeydown
         );
-
 
         window.setTimeout(function () {
 
@@ -2050,7 +1903,6 @@ function setupLogout() {
             return;
         }
 
-
         if (event.key === "Escape") {
 
             event.preventDefault();
@@ -2061,26 +1913,20 @@ function setupLogout() {
 
         }
 
-
-        // Keep keyboard focus inside the modal.
-
         if (event.key === "Tab") {
 
             const focusableElements = logoutModal.querySelectorAll(
                 "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"
             );
 
-
             if (focusableElements.length === 0) {
                 return;
             }
-
 
             const firstElement = focusableElements[0];
 
             const lastElement =
                 focusableElements[focusableElements.length - 1];
-
 
             if (
                 event.shiftKey &&
@@ -2091,9 +1937,7 @@ function setupLogout() {
 
                 lastElement.focus();
 
-            }
-
-            else if (
+            } else if (
                 !event.shiftKey &&
                 document.activeElement === lastElement
             ) {
@@ -2117,7 +1961,6 @@ function setupLogout() {
             return;
         }
 
-
         logoutModal = document.createElement("div");
 
         logoutModal.className = "logout-modal-overlay";
@@ -2133,26 +1976,20 @@ function setupLogout() {
                 tabindex="-1">
 
                 <div class="logout-modal-icon" aria-hidden="true">
-
                     <i class="fa-solid fa-right-from-bracket"></i>
-
                 </div>
-
 
                 <span class="logout-modal-eyebrow">
                     CAFÉSENSE ACCOUNT
                 </span>
 
-
                 <h2 id="logout-modal-title">
                     Confirm Logout
                 </h2>
 
-
                 <p id="logout-modal-description">
                     Are you sure you want to log out of your CaféSense account?
                 </p>
-
 
                 <div class="logout-modal-actions">
 
@@ -2160,11 +1997,8 @@ function setupLogout() {
                         type="button"
                         class="logout-modal-cancel"
                         id="logout-modal-cancel">
-
                         Cancel
-
                     </button>
-
 
                     <button
                         type="button"
@@ -2183,11 +2017,9 @@ function setupLogout() {
 
         `;
 
-
         document.body.appendChild(logoutModal);
 
         document.body.classList.add("logout-modal-open");
-
 
         const cancelButton = logoutModal.querySelector(
             "#logout-modal-cancel"
@@ -2201,9 +2033,7 @@ function setupLogout() {
         // CANCEL LOGOUT
 
         cancelButton.addEventListener("click", function () {
-
             closeLogoutModal();
-
         });
 
 
@@ -2223,9 +2053,7 @@ function setupLogout() {
         logoutModal.addEventListener("click", function (event) {
 
             if (event.target === logoutModal) {
-
                 closeLogoutModal();
-
             }
 
         });

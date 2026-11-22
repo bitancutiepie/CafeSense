@@ -2584,3 +2584,128 @@ body {
 .table-container::-webkit-scrollbar-thumb:hover {
     background: #a98265;
 }
+/* =========================================================
+   26. INVENTORY MOVEMENT HISTORY
+========================================================= */
+
+.movement-history-section {
+    margin-top: 25px;
+}
+
+
+/* FILTER AND REFRESH */
+
+.movement-history-toolbar {
+    align-items: flex-end;
+}
+
+.movement-history-toolbar .secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+
+/* HISTORY TABLE */
+
+.movement-history-table-container {
+    max-height: 420px;
+}
+
+.movement-history-table {
+    min-width: 1050px;
+}
+
+.movement-history-table th,
+.movement-history-table td {
+    vertical-align: middle;
+}
+
+
+/* MOVEMENT TYPE BADGES */
+
+.movement-type-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 5px 9px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.movement-type-badge.sale {
+    background: #e9e8f8;
+    color: #6255a5;
+}
+
+.movement-type-badge.restock,
+.movement-type-badge.adjustment-in {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.movement-type-badge.adjustment-out {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.movement-type-badge.default {
+    background: #f3ece5;
+    color: var(--text-medium);
+}
+
+
+/* QUANTITY CHANGED */
+
+.movement-quantity {
+    font-weight: 700;
+}
+
+.movement-quantity.positive {
+    color: var(--success);
+}
+
+.movement-quantity.negative {
+    color: var(--danger);
+}
+
+
+/* STOCK VALUES */
+
+.movement-stock-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* MOVEMENT REASON AND STAFF */
+
+.movement-reason {
+    color: var(--text-medium);
+}
+
+.movement-performed-by {
+    font-weight: 600;
+}
+
+
+/* RESPONSIVENESS */
+
+@media (max-width: 650px) {
+
+    .movement-history-toolbar {
+        align-items: stretch;
+    }
+
+    .movement-history-toolbar .secondary-btn {
+        width: 100%;
+    }
+
+}

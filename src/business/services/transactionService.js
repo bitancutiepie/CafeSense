@@ -9,12 +9,15 @@ class TransactionService {
         return Math.round((Number(amount) + Number.EPSILON) * 100) / 100;
     }
 
-    async createTransaction(transactionData) {
+    async createTransaction(transactionData, userId) {
 
         if (!transactionData || typeof transactionData !== 'object') {
             throw new AppError('Invalid transaction data.', 400);
         }
 
+        if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+                throw new AppError('Invalid authenticated user.', 401);
+        }
         const {
             items,
             paymentMethod,
@@ -212,7 +215,7 @@ class TransactionService {
                 amountReceived: receivedAmount,
                 changeAmount,
 
-                userId: 1
+                userId: Number(userId)
             });
 
         const now = new Date();

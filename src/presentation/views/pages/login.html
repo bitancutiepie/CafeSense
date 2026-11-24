@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,8 +11,6 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../assets/css/pages/login.css">
 
-    <!-- JavaScript -->
-    <script src="../assets/js/pages/login.js" defer></script>
 </head>
 
 <body>
@@ -27,7 +26,6 @@
 
             <form id="login-form">
 
-                <!-- USERNAME OR EMAIL -->
                 <div class="input-group">
                     <input
                         type="text"
@@ -38,7 +36,6 @@
                     >
                 </div>
 
-                <!-- PASSWORD -->
                 <div class="input-group password-input">
                     <input
                         type="password"
@@ -57,24 +54,20 @@
                     </button>
                 </div>
 
-                <!-- FORGOT PASSWORD -->
                 <div class="forgot-password">
                     <a href="#" id="forgot-password">
                         Forgot Password?
                     </a>
                 </div>
 
-                <!-- LOGIN BUTTON -->
                 <button type="submit" class="main-button">
                     Login
                 </button>
 
-                <!-- LOGIN MESSAGE -->
                 <p id="login-message" class="message"></p>
 
             </form>
 
-            <!-- REGISTRATION LINK -->
             <p class="account-text">
                 Don't have an account?
                 <a href="#" class="switch-link" id="show-register">
@@ -94,7 +87,6 @@
 
             <form id="register-form">
 
-                <!-- FULL NAME -->
                 <div class="input-group">
                     <input
                         type="text"
@@ -105,7 +97,6 @@
                     >
                 </div>
 
-                <!-- USERNAME -->
                 <div class="input-group">
                     <input
                         type="text"
@@ -116,7 +107,6 @@
                     >
                 </div>
 
-                <!-- EMAIL ADDRESS -->
                 <div class="input-group">
                     <input
                         type="email"
@@ -127,7 +117,6 @@
                     >
                 </div>
 
-                <!-- ACCOUNT TYPE -->
                 <div class="input-group">
                     <select id="role" required>
                         <option value="">Select Account Type</option>
@@ -137,7 +126,6 @@
                     </select>
                 </div>
 
-                <!-- CREATE PASSWORD -->
                 <div class="input-group password-input">
                     <input
                         type="password"
@@ -157,7 +145,6 @@
                     </button>
                 </div>
 
-                <!-- CONFIRM PASSWORD -->
                 <div class="input-group password-input">
                     <input
                         type="password"
@@ -176,17 +163,14 @@
                     </button>
                 </div>
 
-                <!-- REGISTER BUTTON -->
                 <button type="submit" class="main-button">
                     Create Account
                 </button>
 
-                <!-- REGISTRATION MESSAGE -->
                 <p id="register-message" class="message"></p>
 
             </form>
 
-            <!-- LOGIN LINK -->
             <p class="account-text">
                 Already have an account?
                 <a href="#" class="switch-link" id="show-login">
@@ -196,7 +180,145 @@
 
         </section>
 
+
+        <!-- ==========================================
+             PASSWORD RESET FORM
+        =========================================== -->
+        <section class="login-card reset-card hidden" id="reset-card">
+
+            <h1 class="brand-name">Reset Password</h1>
+
+            <p class="reset-description">
+                Enter your registered username or email address
+                and create a new password for your account.
+            </p>
+
+            <form id="reset-form">
+
+                <div class="input-group">
+                    <input
+                        type="text"
+                        id="reset-identifier"
+                        placeholder="Username or Email"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+
+                <div class="input-group password-input">
+                    <input
+                        type="password"
+                        id="reset-new-password"
+                        placeholder="New Password (at least 8 characters)"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        data-target="reset-new-password"
+                    >
+                        Show
+                    </button>
+                </div>
+
+                <div class="input-group password-input">
+                    <input
+                        type="password"
+                        id="reset-confirm-password"
+                        placeholder="Confirm New Password"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        data-target="reset-confirm-password"
+                    >
+                        Show
+                    </button>
+                </div>
+
+                <button type="submit" class="main-button">
+                    Reset Password
+                </button>
+
+                <p id="reset-message" class="message"></p>
+
+            </form>
+
+            <p class="account-text">
+                Remembered your password?
+                <a href="#" class="switch-link" id="back-to-login">
+                    Back to Login
+                </a>
+            </p>
+
+        </section>
+
     </main>
+
+
+    <!-- ==========================================
+         CUSTOM CONFIRMATION / NOTIFICATION MODAL
+    =========================================== -->
+    <div
+        class="modal-overlay hidden"
+        id="confirmation-modal"
+        aria-hidden="true"
+    >
+
+        <div
+            class="confirmation-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-message"
+        >
+
+            <!-- MODAL ICON -->
+            <div class="modal-icon" id="modal-icon">
+                !
+            </div>
+
+            <!-- MODAL CONTENT -->
+            <h2 id="modal-title">Confirm Action</h2>
+
+            <p id="modal-message">
+                Are you sure you want to continue?
+            </p>
+
+            <!-- MODAL BUTTONS -->
+            <div class="modal-actions" id="modal-actions">
+
+                <button
+                    type="button"
+                    class="modal-button cancel-button"
+                    id="modal-cancel"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="modal-button confirm-button"
+                    id="modal-confirm"
+                >
+                    Confirm
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- JavaScript -->
+    <script type="module" src="../assets/js/pages/login.js"></script>
 
 </body>
 </html>

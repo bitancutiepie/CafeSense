@@ -1,6 +1,8 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
 const config = require('./index');
 const apiRoutes = require('../presentation/routes');
 const errorHandler = require('./middlewares/errorHandler');
@@ -8,10 +10,21 @@ const notFoundHandler = require('./middlewares/notFoundHandler');
 
 const app = express();
 
+// CORS Configuration
+const allowedOrigins = [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500'
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+
 // Middlewares
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Serve static frontend presentation views
 const viewsPath = path.join(__dirname, '..', 'presentation', 'views');

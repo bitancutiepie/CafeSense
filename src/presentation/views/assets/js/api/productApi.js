@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient.js';
 
 export const productApi = {
+
     async getAll() {
         return await apiClient.get('/products');
     },
@@ -23,6 +24,7 @@ export const productApi = {
 
     // Retrieve inventory movement history
     async getInventoryMovements(productId = null) {
+
         const query = productId
             ? `?productId=${encodeURIComponent(productId)}`
             : '';
@@ -30,7 +32,9 @@ export const productApi = {
         return await apiClient.get(`/products/inventory-movements${query}`);
     },
 
-    async delete(id) {
+    // Soft-deactivate product (mark as Unavailable)
+    async deactivate(id) {
         return await apiClient.delete(`/products/${id}`);
     }
+
 };

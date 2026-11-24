@@ -2325,3 +2325,80 @@ body.logout-modal-open {
         transition: none;
     }
 }
+
+/* =========================================================
+   29. FIX DUPLICATE PAGE SCROLLBARS
+========================================================= */
+
+html,
+body.analytics-body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body.analytics-body {
+    min-height: 0;
+}
+
+.app-layout {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.main-content {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+}
+
+.analytics-page-content {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* PRODUCT PERFORMANCE TABLE SCROLLBAR */
+.product-performance-table {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #b97845 #f0e8df;
+}
+
+/* Chrome, Edge, Safari */
+.product-performance-table::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.product-performance-table::-webkit-scrollbar-track {
+    background: #f0e8df;
+    border-radius: 10px;
+}
+
+.product-performance-table::-webkit-scrollbar-thumb {
+    background: #b97845;
+    border-radius: 10px;
+    border: 2px solid #f0e8df;
+}
+
+.product-performance-table::-webkit-scrollbar-thumb:hover {
+    background: #986039;
+}
+
+/* KEEP TABLE HEADERS VISIBLE WHILE SCROLLING */
+.product-performance-table .analytics-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    /* Keep header background limited to the column headers */
+    background-color: #faf7f3;
+    background-clip: padding-box;
+}

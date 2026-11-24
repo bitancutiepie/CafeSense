@@ -23,8 +23,14 @@ class TransactionRepository {
                 total,
                 amountReceived,
                 changeAmount,
-                userId = 1
+                userId
             } = transactionData;
+
+            if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+                throw new Error(
+                    'A valid user ID is required to create a transaction.'
+                );
+            }
 
             // Temporary unique code while MySQL generates the ID
             const temporaryCode = `CS-${randomUUID()}`;

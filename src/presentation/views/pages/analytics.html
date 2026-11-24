@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,9 +15,6 @@
 
     <!-- FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
-    <!-- CHART.JS -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="../assets/css/pages/analytics.css">
@@ -39,7 +37,7 @@
 
             <div class="brand-title">
                 <h2>CaféSense</h2>
-                <span class="role-badge">Owner Portal</span>
+                <span class="role-badge" id="role-badge">Loading role...</span>
             </div>
 
             <!-- DESKTOP SIDEBAR TOGGLE -->
@@ -104,7 +102,7 @@
 
 
             <!-- ANALYTICS & INSIGHTS -->
-            <div class="nav-section analytics-nav-section">
+            <div class="nav-section analytics-nav-section owner-manager-only">
 
                 <span class="nav-section-label">ANALYTICS & INSIGHTS</span>
 
@@ -187,7 +185,7 @@
 
 
             <!-- REPORTS -->
-            <div class="nav-section">
+            <div class="nav-section owner-manager-only">
 
                 <span class="nav-section-label">REPORTS</span>
 
@@ -219,16 +217,18 @@
 
             <div class="user-profile-card">
 
-                <div class="user-avatar-placeholder">MS</div>
+                <div class="user-avatar-placeholder" id="display-user-avatar">
+                    U
+                </div>
 
                 <div class="user-info">
 
                     <span id="display-user-name" class="user-name">
-                        Maria Santos
+                        Loading user...
                     </span>
 
-                    <span class="user-role">
-                        Lead Administrator
+                    <span class="user-role" id="display-user-role">
+                        Loading role...
                     </span>
 
                 </div>
@@ -321,19 +321,20 @@
             ====================================================== -->
             <section class="analytics-section" id="sales-analytics">
 
-            <!-- PAGE INTRODUCTION -->
-            <div class="page-intro">
+                <!-- PAGE INTRODUCTION -->
+                <div class="page-intro">
 
-                <span class="eyebrow">BUSINESS INTELLIGENCE</span>
+                    <span class="eyebrow">BUSINESS INTELLIGENCE</span>
 
-                <h2>Understand Your Café Better</h2>
+                    <h2>Understand Your Café Better</h2>
 
-                <p>
-                    Analyze sales performance, customer purchasing patterns,
-                    products, and business activity.
-                </p>
+                    <p>
+                        Analyze sales performance, customer purchasing patterns,
+                        products, and business activity.
+                    </p>
 
-            </div>
+                </div>
+
 
                 <div class="section-heading">
 
@@ -353,73 +354,87 @@
 
 
                 <!-- SALES FILTERS -->
-                    <div class="filter-container">
+                <div class="filter-container">
 
-                        <div class="filter-heading">
+                    <div class="filter-heading">
 
-                            <h3>Sales Filters</h3>
+                        <h3>Sales Filters</h3>
 
-                            <p>
-                                Choose the period of sales you want to view and how the results are grouped.
-                            </p>
-
-                        </div>
-
-
-                        <div class="filter-controls">
-
-                            <div class="filter-group">
-
-                                <label for="salesDateFilter">Show Sales For</label>
-
-                                <select id="salesDateFilter">
-
-                                    <option value="all">All Dates</option>
-                                    <option value="today">Today</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month">This Month</option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="filter-group">
-
-                                <label for="salesGroupBy">Display Trend By</label>
-
-                                <select id="salesGroupBy">
-
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-
-                                </select>
-
-                            </div>
-
-
-                            <button type="button" class="apply-button" id="applySalesFilter">
-
-                                <i class="fa-solid fa-filter"></i> Apply
-
-                            </button>
-
-
-                            <button type="button" class="reset-button" id="resetSalesFilter">
-
-                                <i class="fa-solid fa-rotate-left"></i> Reset
-
-                            </button>
-
-                        </div>
-
-
-                        <p class="filter-result" id="salesFilterResult">
-                            Showing all recorded sales.
+                        <p>
+                            Choose the period of sales you want to view and how the results are grouped.
                         </p>
 
                     </div>
+
+
+                    <div class="filter-controls">
+
+                        <div class="filter-group">
+
+                            <label for="salesDateFilter">Show Sales For</label>
+
+                            <select id="salesDateFilter">
+
+                                <option value="all">All Dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">Year</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="salesYearFilter">Select Year</label>
+
+                            <select id="salesYearFilter">
+
+                                <option value="all">All Years</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="salesGroupBy">Display Trend By</label>
+
+                            <select id="salesGroupBy">
+
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button type="button" class="apply-button" id="applySalesFilter">
+
+                            <i class="fa-solid fa-filter"></i> Apply
+
+                        </button>
+
+
+                        <button type="button" class="reset-button" id="resetSalesFilter">
+
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+
+                        </button>
+
+                    </div>
+
+
+                    <p class="filter-result" id="salesFilterResult">
+                        Showing all recorded sales.
+                    </p>
+
+                </div>
 
 
                 <!-- SALES CHARTS -->
@@ -586,6 +601,20 @@
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
+                                <option value="year">Year</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="paymentYearFilter">Select Year</label>
+
+                            <select id="paymentYearFilter">
+
+                                <option value="all">All Years</option>
 
                             </select>
 
@@ -786,6 +815,20 @@
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
+                                <option value="year">Year</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="customerYearFilter">Select Year</label>
+
+                            <select id="customerYearFilter">
+
+                                <option value="all">All Years</option>
 
                             </select>
 
@@ -935,8 +978,6 @@
 
             </section>
 
-
-
             <!-- =====================================================
                  4. PRODUCT ANALYTICS
             ====================================================== -->
@@ -985,6 +1026,20 @@
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
+                                <option value="year">Year</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="productYearFilter">Select Year</label>
+
+                            <select id="productYearFilter">
+
+                                <option value="all">All Years</option>
 
                             </select>
 
@@ -1085,7 +1140,7 @@
                         </div>
 
 
-                        <div class="table-responsive">
+                        <div class="table-responsive product-performance-table">
 
                             <table class="analytics-table">
 
@@ -1194,6 +1249,20 @@
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
+                                <option value="year">Year</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-group">
+
+                            <label for="peakYearFilter">Select Year</label>
+
+                            <select id="peakYearFilter">
+
+                                <option value="all">All Years</option>
 
                             </select>
 
@@ -1360,7 +1429,10 @@
 </div>
 
     <!-- CUSTOM JS -->
-    <script src="../assets/js/pages/analytics.js" defer></script>
-    
+    <script type="module" src="../assets/js/pages/analytics.js"></script>
+
+    <!-- CHART.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </body>
 </html>

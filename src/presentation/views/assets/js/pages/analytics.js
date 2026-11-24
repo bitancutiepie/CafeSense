@@ -1,3 +1,6 @@
+import { productApi } from "../api/productApi.js";
+import { apiClient } from "../api/apiClient.js";
+
 document.addEventListener("DOMContentLoaded", () => {
 
     // ==========================================
@@ -14,15 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const sidebarClose = document.getElementById("sidebarClose");
     const logoutButton = document.getElementById("logout-btn");
 
-    const analyticsDropdownToggle = document.getElementById(
-        "analyticsDropdownToggle"
-    );
-
+    const analyticsDropdownToggle = document.getElementById("analyticsDropdownToggle");
     const analyticsNavList = document.getElementById("analyticsNavList");
-
-    const analyticsPageContent = document.querySelector(
-        ".analytics-page-content"
-    );
+    const analyticsPageContent = document.querySelector(".analytics-page-content");
 
     const currentDateElement = document.getElementById("current-date");
     const currentTimeElement = document.getElementById("current-time");
@@ -61,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let allTransactions = [];
     let allProducts = [];
     let chartInstances = {};
+    let analyticsValueLabelsRegistered = false;
 
 
     // ==========================================
@@ -89,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function escapeHTML(value) {
         return String(value ?? "").replace(/[&<>"']/g, character => {
-
             const characters = {
                 "&": "&amp;",
                 "<": "&lt;",
@@ -103,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getTransactionsFromStorage() {
-
         try {
             const storedTransactions = JSON.parse(
                 localStorage.getItem(TRANSACTIONS_STORAGE_KEY)
@@ -116,13 +112,11 @@ document.addEventListener("DOMContentLoaded", () => {
             let hasCategoryChanges = false;
 
             const updatedTransactions = storedTransactions.map(transaction => {
-
                 if (!Array.isArray(transaction.items)) {
                     return transaction;
                 }
 
                 const updatedItems = transaction.items.map(item => {
-
                     const normalizedCategory = normalizeProductCategory(
                         item.category
                     );
@@ -164,7 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getProductsFromStorage() {
-
         try {
             const storedProducts = JSON.parse(
                 localStorage.getItem(PRODUCTS_STORAGE_KEY)
@@ -177,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let hasCategoryChanges = false;
 
             const updatedProducts = storedProducts.map(product => {
-
                 const normalizedCategory = normalizeProductCategory(
                     product.category
                 );
@@ -213,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function normalizeProductCategory(category) {
-
         if (
             String(category || "").trim().toLowerCase() === "pastries"
         ) {
@@ -229,46 +220,69 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function parseTransactionDate(dateValue) {
-
-        if (!dateValue) {
-            return null;
-        }
+        if (!dateValue) return null;
 
         if (dateValue instanceof Date) {
-            return Number.isNaN(dateValue.getTime())
-                ? null
-                : dateValue;
+            return Number.isNaN(dateValue.getTime()) ? null : dateValue;
         }
 
         if (typeof dateValue === "number") {
-
             const date = new Date(dateValue);
-
-            return Number.isNaN(date.getTime())
-                ? null
-                : date;
+            return Number.isNaN(date.getTime()) ? null : date;
         }
 
-        const parsedDate = new Date(String(dateValue));
+        const value = String(dateValue).trim();
 
-        if (!Number.isNaN(parsedDate.getTime())) {
-            return parsedDate;
+        // MySQL DATETIME has no timezone, so parse it as local time.
+        const mysqlDateTime = value.match(
+            /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/
+        );
+
+        if (mysqlDateTime) {
+            const [
+                ,
+                year,
+                month,
+                day,
+                hour,
+                minute,
+                second,
+                fraction
+            ] = mysqlDateTime;
+
+            const milliseconds = fraction
+                ? Number(`0.${fraction}`) * 1000
+                : 0;
+
+            const date = new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hour),
+                Number(minute),
+                Number(second),
+                Math.floor(milliseconds)
+            );
+
+            return Number.isNaN(date.getTime()) ? null : date;
         }
 
-        return null;
+        // ISO timestamps with timezone information.
+        const parsedDate = new Date(value);
+
+        return Number.isNaN(parsedDate.getTime())
+            ? null
+            : parsedDate;
     }
 
-    // Prefer dateISO because it contains the actual transaction time.
+    // Prefer dateISO because it contains the transaction timestamp.
     // Fall back to date for older transactions without dateISO.
-
     function getTransactionDate(transaction) {
-
         return parseTransactionDate(transaction.dateISO) ||
             parseTransactionDate(transaction.date);
     }
 
     function getStartOfWeek(date) {
-
         const start = new Date(date);
 
         const day = start.getDay();
@@ -281,9 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatHour(hour) {
-
         const date = new Date();
-
         date.setHours(hour, 0, 0, 0);
 
         return date.toLocaleTimeString("en-PH", {
@@ -292,42 +304,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function getDateRangeLabel(range) {
-
+    function getDateRangeLabel(range, selectedYear) {
         const labels = {
             all: "all recorded transactions",
             today: "today's transactions",
             week: "this week's transactions",
-            month: "this month's transactions"
+            month: "this month's transactions",
+            year: selectedYear === "all"
+                ? "transactions from all recorded years"
+                : `transactions from ${selectedYear}`
         };
 
         return labels[range] || "selected transactions";
     }
 
-    function filterTransactionsByDate(transactions, range) {
-
+    function filterTransactionsByDate(
+        transactions,
+        range,
+        selectedYear = "all"
+    ) {
         const now = new Date();
 
         return transactions.filter(transaction => {
-
-            // FIX: Use the actual transaction timestamp when available.
             const transactionDate = getTransactionDate(transaction);
+
+            if (!transactionDate) return false;
 
             if (range === "all") {
                 return true;
             }
 
-            if (!transactionDate) {
-                return false;
-            }
-
             if (range === "today") {
-
                 return transactionDate.toDateString() === now.toDateString();
             }
 
             if (range === "week") {
-
                 const startOfWeek = getStartOfWeek(now);
 
                 const endOfWeek = new Date(startOfWeek);
@@ -338,9 +349,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (range === "month") {
-
                 return transactionDate.getMonth() === now.getMonth() &&
                     transactionDate.getFullYear() === now.getFullYear();
+            }
+
+            if (range === "year") {
+                // "All Years" must include every recorded year.
+                if (selectedYear === "all") {
+                    return true;
+                }
+
+                return transactionDate.getFullYear() === Number(selectedYear);
             }
 
             return true;
@@ -353,13 +372,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function getTransactionItems(transactions) {
-
         return transactions.flatMap(transaction => {
-
             return Array.isArray(transaction.items)
                 ? transaction.items
                 : [];
-
         });
     }
 
@@ -372,7 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getItemGrossSubtotal(item) {
-
         if (item.lineSubtotal !== undefined) {
             return Number(item.lineSubtotal) || 0;
         }
@@ -384,7 +399,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getItemNetSales(item) {
-
         if (item.lineTotal !== undefined) {
             return Number(item.lineTotal) || 0;
         }
@@ -396,7 +410,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getItemDiscount(item) {
-
         if (item.lineDiscount !== undefined) {
             return Number(item.lineDiscount) || 0;
         }
@@ -409,12 +422,110 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5. CHART HELPERS
     // ==========================================
 
-    function createChart(canvasId, config) {
+    const analyticsValueLabels = {
+        id: "analyticsValueLabels",
 
+        afterDatasetsDraw(chart, args, options) {
+            if (options.display === false) return;
+
+            const { ctx } = chart;
+
+            ctx.save();
+
+            ctx.font = "600 11px DM Sans, sans-serif";
+            ctx.fillStyle = "#6f625b";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                const meta = chart.getDatasetMeta(datasetIndex);
+
+                if (meta.hidden) return;
+
+                const values = dataset.data || [];
+
+                // DOUGHNUT CHART PERCENTAGES
+                if (chart.config.type === "doughnut") {
+                    const total = values.reduce(
+                        (sum, value) => sum + (Number(value) || 0),
+                        0
+                    );
+
+                    if (!total) return;
+
+                    meta.data.forEach((arc, index) => {
+                        const value = Number(values[index]) || 0;
+                        const percentage = (value / total) * 100;
+
+                        // Avoid clutter on very small segments.
+                        if (percentage < 5) return;
+
+                        const position = arc.tooltipPosition();
+
+                        ctx.fillStyle = "#ffffff";
+
+                        ctx.fillText(
+                            `${percentage.toFixed(1)}%`,
+                            position.x,
+                            position.y
+                        );
+                    });
+
+                    return;
+                }
+
+                // NUMERICAL LABELS FOR BAR AND LINE CHARTS
+                meta.data.forEach((element, index) => {
+                    const value = Number(values[index]) || 0;
+
+                    if (chart.config.options.indexAxis === "y") {
+                        ctx.textAlign = "left";
+                        ctx.fillStyle = "#6f625b";
+
+                        ctx.fillText(
+                            value.toLocaleString("en-PH"),
+                            element.x + 7,
+                            element.y
+                        );
+
+                    } else if (chart.config.type === "line") {
+                        ctx.textAlign = "center";
+                        ctx.fillStyle = "#6f625b";
+
+                        ctx.fillText(
+                            value.toLocaleString("en-PH"),
+                            element.x,
+                            element.y - 12
+                        );
+
+                    } else {
+                        ctx.textAlign = "center";
+                        ctx.fillStyle = "#6f625b";
+
+                        ctx.fillText(
+                            value.toLocaleString("en-PH"),
+                            element.x,
+                            element.y - 10
+                        );
+                    }
+                });
+            });
+
+            ctx.restore();
+        }
+    };
+
+    function createChart(canvasId, config) {
         const canvas = getElement(canvasId);
 
         if (!canvas || typeof Chart === "undefined") {
             return;
+        }
+
+        // Register the custom value-label plugin only once.
+        if (!analyticsValueLabelsRegistered) {
+            Chart.register(analyticsValueLabels);
+            analyticsValueLabelsRegistered = true;
         }
 
         if (chartInstances[canvasId]) {
@@ -425,7 +536,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getChartOptions() {
-
         return {
             responsive: true,
             maintainAspectRatio: false,
@@ -445,7 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getDoughnutOptions() {
-
         return {
             ...getChartOptions(),
 
@@ -469,7 +578,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showEmptyTable(bodyId, colspan, message) {
-
         const body = getElement(bodyId);
 
         if (!body) return;
@@ -489,23 +597,88 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function getDateFilteredTransactions(dateFilterId) {
-
         const filter = getElement(dateFilterId);
-
         const range = filter ? filter.value : "all";
+
+        const yearFilterId = dateFilterId.replace(
+            "DateFilter",
+            "YearFilter"
+        );
+
+        const yearFilter = getElement(yearFilterId);
+        const selectedYear = yearFilter ? yearFilter.value : "all";
 
         return filterTransactionsByDate(
             allTransactions,
-            range
+            range,
+            selectedYear
         );
     }
 
     function updateFilterResult(elementId, transactions, range) {
+        const dateFilterId = elementId.replace(
+            "FilterResult",
+            "DateFilter"
+        );
+
+        const yearFilterId = dateFilterId.replace(
+            "DateFilter",
+            "YearFilter"
+        );
+
+        const yearFilter = getElement(yearFilterId);
+        const selectedYear = yearFilter ? yearFilter.value : "all";
 
         setText(
             elementId,
-            `Showing ${formatNumber(transactions.length)} transaction(s) from ${getDateRangeLabel(range)}.`
+            `Showing ${formatNumber(transactions.length)} transaction(s) from ${getDateRangeLabel(range, selectedYear)}.`
         );
+    }
+
+    function populateYearFilters() {
+        const yearFilterIds = [
+            "salesYearFilter",
+            "paymentYearFilter",
+            "customerYearFilter",
+            "productYearFilter",
+            "peakYearFilter"
+        ];
+
+        const years = [
+            ...new Set(
+                allTransactions
+                    .map(transaction => getTransactionDate(transaction))
+                    .filter(Boolean)
+                    .map(date => date.getFullYear())
+            )
+        ].sort((a, b) => b - a);
+
+        const currentYear = new Date().getFullYear();
+
+        yearFilterIds.forEach(id => {
+            const filter = getElement(id);
+
+            if (!filter) return;
+
+            const previousValue = filter.value;
+
+            filter.innerHTML = `
+                <option value="all">All Years</option>
+                ${years.map(year => `
+                    <option value="${year}">${year}</option>
+                `).join("")}
+            `;
+
+            if (years.includes(Number(previousValue))) {
+                filter.value = previousValue;
+
+            } else if (years.includes(currentYear)) {
+                filter.value = String(currentYear);
+
+            } else {
+                filter.value = "all";
+            }
+        });
     }
 
 
@@ -514,7 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function renderSalesAnalytics() {
-
         const dateFilter = getElement("salesDateFilter");
         const groupFilter = getElement("salesGroupBy");
 
@@ -560,8 +732,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const groupedSales = {};
 
         transactions.forEach(transaction => {
-
-            // FIX: Use the actual transaction timestamp when available.
             const date = getTransactionDate(transaction);
 
             if (!date) return;
@@ -570,7 +740,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let groupLabel;
 
             if (groupBy === "daily") {
-
                 groupKey = [
                     date.getFullYear(),
                     date.getMonth(),
@@ -584,7 +753,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
             } else if (groupBy === "weekly") {
-
                 const weekStart = getStartOfWeek(date);
 
                 groupKey = [
@@ -600,7 +768,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 })}`;
 
             } else {
-
                 groupKey = [
                     date.getFullYear(),
                     date.getMonth()
@@ -613,7 +780,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (!groupedSales[groupKey]) {
-
                 groupedSales[groupKey] = {
                     label: groupLabel,
                     sales: 0,
@@ -631,7 +797,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         createChart("salesTrendChart", {
-
             type: "line",
 
             data: {
@@ -665,7 +830,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (transactions.length === 0) {
-
             setText("salesInsightTitle", "No sales data available");
 
             setText(
@@ -693,19 +857,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function renderPaymentAnalytics() {
-
         const range = getElement("paymentDateFilter").value;
 
         const selectedMethod = getElement(
             "paymentMethodFilter"
         ).value;
 
-        let transactions = getDateFilteredTransactions(
+        // Keep the complete date-filtered list for percentage calculations.
+        const dateFilteredTransactions = getDateFilteredTransactions(
             "paymentDateFilter"
         );
 
-        if (selectedMethod !== "all") {
+        let transactions = [...dateFilteredTransactions];
 
+        if (selectedMethod !== "all") {
             transactions = transactions.filter(transaction => {
                 return transaction.paymentMethod === selectedMethod;
             });
@@ -720,7 +885,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const paymentData = {};
 
         PAYMENT_METHODS.forEach(method => {
-
             paymentData[method] = {
                 transactions: 0,
                 sales: 0
@@ -728,13 +892,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         transactions.forEach(transaction => {
-
             const method = transaction.paymentMethod;
 
             if (!method) return;
 
             if (!paymentData[method]) {
-
                 paymentData[method] = {
                     transactions: 0,
                     sales: 0
@@ -753,7 +915,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         createChart("paymentDistributionChart", {
-
             type: "doughnut",
 
             data: {
@@ -780,7 +941,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (methods.length === 0) {
-
             showEmptyTable(
                 "paymentBreakdownBody",
                 3,
@@ -800,7 +960,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const tableBody = getElement("paymentBreakdownBody");
 
         tableBody.innerHTML = methods.map(method => {
-
             return `
                 <tr>
                     <td>${escapeHTML(method)}</td>
@@ -808,23 +967,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${formatCurrency(paymentData[method].sales)}</td>
                 </tr>
             `;
-
         }).join("");
 
         const topMethod = methods.reduce((best, method) => {
-
             return paymentData[method].transactions >
                 paymentData[best].transactions
                 ? method
                 : best;
-
         }, methods[0]);
 
         const topCount = paymentData[topMethod].transactions;
 
-        const percentage = (
-            topCount / transactions.length
-        ) * 100;
+        // Compare against all transactions in the selected date range.
+        const percentage = dateFilteredTransactions.length > 0
+            ? (topCount / dateFilteredTransactions.length) * 100
+            : 0;
 
         setText(
             "paymentInsightTitle",
@@ -833,7 +990,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         setText(
             "paymentInsightText",
-            `It was used in ${formatNumber(topCount)} transaction(s), representing ${percentage.toFixed(1)}% of the transactions matching your selected filters.`
+            `It was used in ${formatNumber(topCount)} transaction(s), representing ${percentage.toFixed(1)}% of all transactions in the selected date range.`
         );
     }
 
@@ -843,7 +1000,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function renderCustomerAnalytics() {
-
         const range = getElement("customerDateFilter").value;
 
         const selectedType = getElement(
@@ -857,7 +1013,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const customerData = {};
 
         CUSTOMER_TYPES.forEach(type => {
-
             customerData[type] = {
                 units: 0,
                 sales: 0,
@@ -870,7 +1025,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         items.forEach(item => {
-
             const type = item.customerType;
 
             if (!type) return;
@@ -880,7 +1034,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (!customerData[type]) {
-
                 customerData[type] = {
                     units: 0,
                     sales: 0,
@@ -900,7 +1053,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const matchingTransactions = selectedType === "all"
             ? dateFilteredTransactions
             : dateFilteredTransactions.filter(transaction => {
-
                 return Array.isArray(transaction.items) &&
                     transaction.items.some(item => {
                         return item.customerType === selectedType;
@@ -914,7 +1066,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         createChart("customerDistributionChart", {
-
             type: "doughnut",
 
             data: {
@@ -938,7 +1089,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (types.length === 0) {
-
             showEmptyTable(
                 "customerBreakdownBody",
                 3,
@@ -958,7 +1108,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const tableBody = getElement("customerBreakdownBody");
 
         tableBody.innerHTML = types.map(type => {
-
             return `
                 <tr>
                     <td>${escapeHTML(type)}</td>
@@ -966,16 +1115,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${formatCurrency(customerData[type].sales)}</td>
                 </tr>
             `;
-
         }).join("");
 
         const topType = types.reduce((best, type) => {
-
             return customerData[type].units >
                 customerData[best].units
                 ? type
                 : best;
-
         }, types[0]);
 
         const totalUnits = types.reduce((sum, type) => {
@@ -1003,13 +1149,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function getProductCategory(item) {
-
         if (item.category) {
             return normalizeProductCategory(item.category);
         }
 
         const matchingProduct = allProducts.find(product => {
-
             return String(product.id) === String(item.productId) ||
                 product.name === item.name;
         });
@@ -1020,7 +1164,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getProductIdentity(product) {
-
         if (product.id !== undefined && product.id !== null) {
             return String(product.id);
         }
@@ -1029,7 +1172,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function populateProductFilters() {
-
         const categoryFilter = getElement("productCategoryFilter");
         const productFilter = getElement("productFilter");
 
@@ -1063,7 +1205,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function populateProductOptions(previousProduct = "all") {
-
         const categoryFilter = getElement("productCategoryFilter");
         const productFilter = getElement("productFilter");
 
@@ -1072,7 +1213,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedCategory = categoryFilter.value;
 
         const filteredProducts = allProducts.filter(product => {
-
             return selectedCategory === "all" ||
                 normalizeProductCategory(product.category) === selectedCategory;
         });
@@ -1096,7 +1236,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderProductAnalytics() {
-
         const range = getElement("productDateFilter").value;
 
         const selectedCategory = getElement(
@@ -1116,11 +1255,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const productData = {};
 
         items.forEach(item => {
-
             const category = getProductCategory(item);
 
             const matchingProduct = allProducts.find(product => {
-
                 return String(product.id) === String(item.productId) ||
                     product.name === item.name;
             });
@@ -1148,7 +1285,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (!productData[identity]) {
-
                 productData[identity] = {
                     name: productName,
                     units: 0,
@@ -1169,14 +1305,11 @@ document.addEventListener("DOMContentLoaded", () => {
             selectedCategory === "all"
             ? transactions
             : transactions.filter(transaction => {
-
                 return Array.isArray(transaction.items) &&
                     transaction.items.some(item => {
-
                         const category = getProductCategory(item);
 
                         const matchingProduct = allProducts.find(product => {
-
                             return String(product.id) === String(item.productId) ||
                                 product.name === item.name;
                         });
@@ -1204,7 +1337,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         createChart("topProductsChart", {
-
             type: "bar",
 
             data: {
@@ -1244,7 +1376,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (sortedProducts.length === 0) {
-
             showEmptyTable(
                 "productBreakdownBody",
                 3,
@@ -1264,7 +1395,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const tableBody = getElement("productBreakdownBody");
 
         tableBody.innerHTML = sortedProducts.map(product => {
-
             return `
                 <tr>
                     <td>${escapeHTML(product.name)}</td>
@@ -1272,7 +1402,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${formatCurrency(product.sales)}</td>
                 </tr>
             `;
-
         }).join("");
 
         const bestProduct = sortedProducts[0];
@@ -1287,14 +1416,11 @@ document.addEventListener("DOMContentLoaded", () => {
             `It recorded ${formatNumber(bestProduct.units)} unit(s) sold and generated ${formatCurrency(bestProduct.sales)} in net sales during the selected period.`
         );
     }
-
-
     // ==========================================
     // 11. PEAK HOURS ANALYTICS
     // ==========================================
 
     function renderPeakHoursAnalytics() {
-
         const range = getElement("peakDateFilter").value;
         const selectedDay = getElement("peakDayFilter").value;
 
@@ -1303,10 +1429,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         if (selectedDay !== "all") {
-
             transactions = transactions.filter(transaction => {
-
-                // FIX: Use the actual transaction timestamp.
                 const date = getTransactionDate(transaction);
 
                 return date && date.getDay() === Number(selectedDay);
@@ -1322,7 +1445,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const hourlyData = {};
 
         for (let hour = 0; hour < 24; hour++) {
-
             hourlyData[hour] = {
                 transactions: 0,
                 sales: 0
@@ -1330,8 +1452,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         transactions.forEach(transaction => {
-
-            // FIX: Use dateISO to retrieve the actual transaction hour.
             const date = getTransactionDate(transaction);
 
             if (!date) return;
@@ -1355,7 +1475,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         createChart("peakHoursChart", {
-
             type: "bar",
 
             data: {
@@ -1396,7 +1515,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (activeHours.length === 0) {
-
             setText("peakHourValue", "N/A");
 
             setText(
@@ -1417,12 +1535,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const peakHour = activeHours.reduce((best, hour) => {
-
             return hourlyData[hour].transactions >
                 hourlyData[best].transactions
                 ? hour
                 : best;
-
         }, activeHours[0]);
 
         const peakData = hourlyData[peakHour];
@@ -1493,8 +1609,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         getElement("resetSalesFilter").addEventListener("click", () => {
-
             getElement("salesDateFilter").value = "all";
+            getElement("salesYearFilter").value = "all";
             getElement("salesGroupBy").value = "daily";
 
             updateSalesAnalytics();
@@ -1509,8 +1625,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         getElement("resetPaymentFilter").addEventListener("click", () => {
-
             getElement("paymentDateFilter").value = "all";
+            getElement("paymentYearFilter").value = "all";
             getElement("paymentMethodFilter").value = "all";
 
             updatePaymentAnalytics();
@@ -1525,8 +1641,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         getElement("resetCustomerFilter").addEventListener("click", () => {
-
             getElement("customerDateFilter").value = "all";
+            getElement("customerYearFilter").value = "all";
             getElement("customerTypeFilter").value = "all";
 
             updateCustomerAnalytics();
@@ -1548,8 +1664,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         getElement("resetProductFilter").addEventListener("click", () => {
-
             getElement("productDateFilter").value = "all";
+            getElement("productYearFilter").value = "all";
             getElement("productCategoryFilter").value = "all";
 
             populateProductOptions();
@@ -1568,8 +1684,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         getElement("resetPeakFilter").addEventListener("click", () => {
-
             getElement("peakDateFilter").value = "all";
+            getElement("peakYearFilter").value = "all";
             getElement("peakDayFilter").value = "all";
 
             updatePeakHoursAnalytics();
@@ -1586,7 +1702,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateDesktopSidebarToggle() {
-
         if (!sidebarToggle || !sidebar) return;
 
         const isCollapsed = sidebar.classList.contains("collapsed");
@@ -1608,7 +1723,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateMobileSidebarToggle(isOpen) {
-
         if (!mobileSidebarToggle) return;
 
         mobileSidebarToggle.setAttribute(
@@ -1628,7 +1742,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function openMobileSidebar() {
-
         if (!sidebar || !isMobileView()) return;
 
         sidebar.classList.add("mobile-open");
@@ -1639,7 +1752,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeMobileSidebar() {
-
         if (!sidebar) return;
 
         sidebar.classList.remove("mobile-open");
@@ -1655,13 +1767,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function setupAnalyticsDropdown() {
-
         if (!analyticsDropdownToggle || !analyticsNavList) {
             return;
         }
 
         analyticsDropdownToggle.addEventListener("click", () => {
-
             analyticsDropdownToggle.classList.add("active");
 
             // Toggle the submenu without expanding the sidebar.
@@ -1686,11 +1796,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function setupSidebar() {
-
         if (!sidebar) return;
 
         // Restore saved desktop sidebar state.
-
         let savedCollapsedState = false;
 
         try {
@@ -1701,15 +1809,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function applySidebarState() {
-
             if (isMobileView()) {
-
                 sidebar.classList.remove("collapsed");
 
                 closeMobileSidebar();
 
             } else {
-
                 closeMobileSidebar();
 
                 sidebar.classList.toggle(
@@ -1724,9 +1829,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // DESKTOP COLLAPSE / EXPAND
 
         if (sidebarToggle) {
-
             sidebarToggle.addEventListener("click", () => {
-
                 if (isMobileView()) {
                     return;
                 }
@@ -1752,9 +1855,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // MOBILE OPEN
 
         if (mobileSidebarToggle) {
-
             mobileSidebarToggle.addEventListener("click", () => {
-
                 if (!isMobileView()) return;
 
                 if (sidebar.classList.contains("mobile-open")) {
@@ -1768,7 +1869,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // MOBILE CLOSE BUTTON
 
         if (sidebarClose) {
-
             sidebarClose.addEventListener("click", () => {
                 closeMobileSidebar();
             });
@@ -1777,14 +1877,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // CLOSE WHEN CLICKING OUTSIDE THE SIDEBAR
 
         document.addEventListener("click", event => {
-
             if (
                 isMobileView() &&
                 sidebar.classList.contains("mobile-open") &&
                 !sidebar.contains(event.target) &&
                 !mobileSidebarToggle?.contains(event.target)
             ) {
-
                 closeMobileSidebar();
             }
         });
@@ -1792,13 +1890,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // CLOSE WHEN PRESSING ESCAPE
 
         document.addEventListener("keydown", event => {
-
             if (
                 event.key === "Escape" &&
                 isMobileView() &&
                 sidebar.classList.contains("mobile-open")
             ) {
-
                 closeMobileSidebar();
 
                 if (mobileSidebarToggle) {
@@ -1810,15 +1906,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // HANDLE SCREEN SIZE CHANGES
 
         function handleSidebarResize() {
-
             if (isMobileView()) {
-
                 sidebar.classList.remove("collapsed");
 
                 closeMobileSidebar();
 
             } else {
-
                 closeMobileSidebar();
 
                 sidebar.classList.toggle(
@@ -1848,7 +1941,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function setupAnalyticsNavigation() {
-
         const navigationLinks = document.querySelectorAll(
             ".analytics-nav-item"
         );
@@ -1858,12 +1950,12 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         // Always highlight the parent Analytics & Insights item.
-        analyticsDropdownToggle.classList.add("active");
+        if (analyticsDropdownToggle) {
+            analyticsDropdownToggle.classList.add("active");
+        }
 
         function updateActiveSubmenu(activeSectionId) {
-
             navigationLinks.forEach(link => {
-
                 link.classList.toggle(
                     "active",
                     link.dataset.section === activeSectionId
@@ -1872,9 +1964,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         navigationLinks.forEach(link => {
-
             link.addEventListener("click", event => {
-
                 event.preventDefault();
 
                 const sectionId = link.dataset.section;
@@ -1884,12 +1974,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 updateActiveSubmenu(sectionId);
 
-                analyticsNavList.classList.remove("collapsed");
+                if (analyticsNavList) {
+                    analyticsNavList.classList.remove("collapsed");
+                }
 
-                analyticsDropdownToggle.setAttribute(
-                    "aria-expanded",
-                    "true"
-                );
+                if (analyticsDropdownToggle) {
+                    analyticsDropdownToggle.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
 
                 targetSection.scrollIntoView({
                     behavior: "smooth",
@@ -1903,9 +1997,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const observer = new IntersectionObserver(entries => {
-
             entries.forEach(entry => {
-
                 if (entry.isIntersecting) {
                     updateActiveSubmenu(entry.target.id);
                 }
@@ -1928,7 +2020,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function setupLogout() {
-
         if (!logoutButton) {
             return;
         }
@@ -1936,7 +2027,6 @@ document.addEventListener("DOMContentLoaded", () => {
         let logoutModal = null;
 
         function closeLogoutModal() {
-
             if (!logoutModal) {
                 return;
             }
@@ -1953,7 +2043,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             window.setTimeout(function () {
-
                 modalToClose.remove();
 
                 if (logoutModal === modalToClose) {
@@ -1966,13 +2055,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function handleLogoutModalKeydown(event) {
-
             if (!logoutModal) {
                 return;
             }
 
             if (event.key === "Escape") {
-
                 event.preventDefault();
 
                 closeLogoutModal();
@@ -1981,7 +2068,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (event.key === "Tab") {
-
                 const focusableElements = logoutModal.querySelectorAll(
                     "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"
                 );
@@ -1999,7 +2085,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     event.shiftKey &&
                     document.activeElement === firstElement
                 ) {
-
                     event.preventDefault();
 
                     lastElement.focus();
@@ -2008,7 +2093,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     !event.shiftKey &&
                     document.activeElement === lastElement
                 ) {
-
                     event.preventDefault();
 
                     firstElement.focus();
@@ -2017,7 +2101,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function openLogoutModal() {
-
             if (logoutModal) {
                 return;
             }
@@ -2027,7 +2110,6 @@ document.addEventListener("DOMContentLoaded", () => {
             logoutModal.className = "logout-modal-overlay";
 
             logoutModal.innerHTML = `
-
                 <section
                     class="logout-modal"
                     role="dialog"
@@ -2037,9 +2119,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tabindex="-1">
 
                     <div class="logout-modal-icon" aria-hidden="true">
-
                         <i class="fa-solid fa-right-from-bracket"></i>
-
                     </div>
 
                     <span class="logout-modal-eyebrow">
@@ -2055,31 +2135,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     </p>
 
                     <div class="logout-modal-actions">
-
                         <button
                             type="button"
                             class="logout-modal-cancel"
                             id="logout-modal-cancel">
-
                             Cancel
-
                         </button>
 
                         <button
                             type="button"
                             class="logout-modal-confirm"
                             id="logout-modal-confirm">
-
                             <i class="fa-solid fa-right-from-bracket"></i>
-
                             Yes, Logout
-
                         </button>
-
                     </div>
 
                 </section>
-
             `;
 
             document.body.appendChild(logoutModal);
@@ -2098,18 +2170,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 closeLogoutModal();
             });
 
-            // CONFIRM LOGOUT
+            confirmButton.addEventListener("click", async function () {
+                confirmButton.disabled = true;
 
-            confirmButton.addEventListener("click", function () {
+                try {
+                    await apiClient.post("/auth/logout", {});
 
-                sessionStorage.clear();
+                    window.location.replace("./login.html");
 
-                window.location.href = "./login.html";
+                } catch (error) {
+                    console.error("Logout failed:", error);
 
+                    confirmButton.disabled = false;
+
+                    alert("Unable to sign out. Please try again.");
+                }
             });
 
             logoutModal.addEventListener("click", function (event) {
-
                 if (event.target === logoutModal) {
                     closeLogoutModal();
                 }
@@ -2121,9 +2199,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             requestAnimationFrame(function () {
-
                 if (logoutModal) {
-
                     logoutModal.classList.add("show");
 
                     cancelButton.focus();
@@ -2132,7 +2208,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         logoutButton.addEventListener("click", function (event) {
-
             event.preventDefault();
 
             openLogoutModal();
@@ -2145,11 +2220,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function updateCurrentDateTime() {
-
         const now = new Date();
 
         if (currentDateElement) {
-
             currentDateElement.textContent =
                 now.toLocaleDateString("en-PH", {
                     weekday: "long",
@@ -2160,7 +2233,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (currentTimeElement) {
-
             currentTimeElement.textContent =
                 now.toLocaleTimeString("en-PH", {
                     hour: "numeric",
@@ -2173,58 +2245,235 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCurrentDateTime();
 
     window.setInterval(updateCurrentDateTime, 1000);
-
-
     // ==========================================
-    // 20. REFRESH DATA
+    // 20. REFRESH DATA FROM MYSQL
     // ==========================================
 
-    function refreshAnalyticsData() {
+    async function refreshAnalyticsData() {
+        try {
+            const [
+                analyticsResponse,
+                productResponse
+            ] = await Promise.all([
+                apiClient.get("/analytics"),
+                productApi.getAll()
+            ]);
 
-        allTransactions = getTransactionsFromStorage();
-        allProducts = getProductsFromStorage();
+            const analyticsData = analyticsResponse.data;
+            const databaseProducts = productResponse.data;
 
-        populateProductFilters();
-
-        updateSalesAnalytics();
-        updatePaymentAnalytics();
-        updateCustomerAnalytics();
-        updateProductAnalytics();
-        updatePeakHoursAnalytics();
-    }
-
-
-    // ==========================================
-    // 21. INITIALIZE ANALYTICS
-    // ==========================================
-
-    function initializeAnalytics() {
-
-        updateCurrentDateTime();
-
-        setupSidebar();
-        setupAnalyticsDropdown();
-        setupAnalyticsNavigation();
-        setupLogout();
-        setupFilters();
-
-        refreshAnalyticsData();
-
-        // Refresh when another browser tab updates
-        // the POS transactions or inventory.
-
-        window.addEventListener("storage", event => {
+            const databaseTransactions = analyticsData?.transactions;
+            const databaseTransactionItems = analyticsData?.transactionItems;
 
             if (
-                event.key === TRANSACTIONS_STORAGE_KEY ||
-                event.key === PRODUCTS_STORAGE_KEY
+                !Array.isArray(databaseTransactions) ||
+                !Array.isArray(databaseTransactionItems) ||
+                !Array.isArray(databaseProducts)
             ) {
-
-                refreshAnalyticsData();
+                throw new Error("Invalid analytics data received from the server.");
             }
-        });
+
+            // Group purchased items by transaction ID.
+            const transactionItemsMap = new Map();
+
+            databaseTransactionItems.forEach(item => {
+                const transactionId = String(item.transactionId);
+
+                if (!transactionItemsMap.has(transactionId)) {
+                    transactionItemsMap.set(transactionId, []);
+                }
+
+                // Convert the API item structure
+                // into the format expected by existing analytics functions.
+                transactionItemsMap.get(transactionId).push({
+                    productId: item.productId,
+                    name: item.productName,
+                    category: normalizeProductCategory(item.category),
+
+                    quantity: item.quantity,
+                    price: item.unitPrice,
+
+                    lineSubtotal: item.subtotal,
+                    lineDiscount: item.discount,
+                    lineTotal: item.total,
+
+                    customerType: item.customerType
+                });
+            });
+
+            // Attach purchased items to their corresponding transactions.
+            allTransactions = databaseTransactions.map(transaction => ({
+                ...transaction,
+
+                // Preserve the original transaction timestamp.
+                dateISO: transaction.date,
+
+                // Attach the corresponding purchased items.
+                items: transactionItemsMap.get(
+                    String(transaction.transactionId)
+                ) || []
+            }));
+
+            allProducts = databaseProducts;
+
+            console.log(
+                "Analytics transactions loaded:",
+                allTransactions.length
+            );
+
+            console.log(
+                "Analytics transaction items loaded:",
+                databaseTransactionItems.length
+            );
+
+            console.log(
+                "Analytics products loaded:",
+                allProducts.length
+            );
+
+            // Populate filters using the latest database data.
+            populateYearFilters();
+
+            populateProductFilters();
+
+            // Refresh existing charts and tables.
+            updateSalesAnalytics();
+            updatePaymentAnalytics();
+            updateCustomerAnalytics();
+            updateProductAnalytics();
+            updatePeakHoursAnalytics();
+
+        } catch (error) {
+            console.error("Unable to load analytics data:", error);
+
+            setText(
+                "salesInsightTitle",
+                "Unable to load analytics data"
+            );
+
+            setText(
+                "salesInsightText",
+                "Please check your backend connection and try again."
+            );
+
+            alert("Unable to load Analytics data. Please try again.");
+        }
     }
 
+
+    // ==========================================
+    // UPDATE LOGGED-IN USER PROFILE
+    // ==========================================
+
+    function updateUserProfile(user) {
+        const fullName = user.fullName || user.username || "User";
+
+        const role = String(user.role || "Staff").trim();
+
+        // Update user name
+        setText("display-user-name", fullName);
+
+        // Update user role
+        setText("display-user-role", role);
+
+        // Update role badge
+        setText("role-badge", `${role} Portal`);
+
+        // Generate user initials
+        const avatar = getElement("display-user-avatar");
+
+        if (avatar) {
+            const initials = fullName
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(name => name.charAt(0).toUpperCase())
+                .join("");
+
+            avatar.textContent = initials || "U";
+        }
+    }
+
+
+    // ==========================================
+    // 21. AUTHENTICATION AND INITIALIZE ANALYTICS
+    // ==========================================
+
+    async function initializeAnalytics() {
+        try {
+            // VERIFY LOGIN SESSION
+            const authResponse = await apiClient.get("/auth/me");
+
+            if (!authResponse.success || !authResponse.data?.user) {
+                window.location.replace("./login.html");
+                return;
+            }
+
+            const currentUser = authResponse.data.user;
+
+            updateUserProfile(currentUser);
+
+            // ONLY OWNER AND MANAGER CAN ACCESS ANALYTICS
+            const allowedRoles = ["owner", "manager"];
+
+            const currentRole = String(currentUser.role || "")
+                .trim()
+                .toLowerCase();
+
+            if (!allowedRoles.includes(currentRole)) {
+                alert("You do not have permission to access Analytics.");
+
+                window.location.replace("./dashboard.html");
+
+                return;
+            }
+
+            // HIDE OWNER-ONLY NAVIGATION FOR MANAGERS
+            document.querySelectorAll(".owner-only").forEach(element => {
+                element.style.display =
+                    currentRole === "owner" ? "" : "none";
+            });
+
+            // INITIALIZE PAGE FEATURES
+            updateCurrentDateTime();
+
+            setupSidebar();
+            setupAnalyticsDropdown();
+            setupAnalyticsNavigation();
+            setupLogout();
+            setupFilters();
+
+            // LOAD MYSQL DATA
+            await refreshAnalyticsData();
+
+        } catch (error) {
+            console.error(
+                "Analytics authentication failed:",
+                error
+            );
+
+            if ([401, 403, 404].includes(error.status)) {
+                window.location.replace("./login.html");
+                return;
+            }
+
+            document.body.innerHTML = `
+                <main style="max-width:600px;margin:80px auto;padding:24px;text-align:center;font-family:Arial,sans-serif;">
+                    <h2>Unable to Verify Your Session</h2>
+
+                    <p>
+                        Please make sure the CaféSense backend is running,
+                        then try again.
+                    </p>
+
+                    <button onclick="window.location.reload()">
+                        Retry
+                    </button>
+                </main>
+            `;
+        }
+    }
 
     initializeAnalytics();
 

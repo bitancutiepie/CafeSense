@@ -1,3 +1,4 @@
+
 const db = require('../../config/database');
 const Product = require('../../business/models/Product');
 
@@ -96,7 +97,7 @@ class ProductRepository {
         return rows[0].category_id;
     }
 
-    // Generate the next product code (P016, P017, etc.)
+    // Generate the next product code
     async generateProductCode() {
         const sql = `
             SELECT COALESCE(
@@ -114,7 +115,10 @@ class ProductRepository {
 
     // Create a new product
     async create(productData) {
-        const categoryId = await this.findCategoryId(productData.category);
+        const categoryId = await this.findCategoryId(
+            productData.category
+        );
+
         const productCode = await this.generateProductCode();
 
         const sql = `
@@ -141,7 +145,7 @@ class ProductRepository {
         return this.findById(result.insertId);
     }
 
-    // Update an existing product
+    // Update product details without changing stock
     async update(id, updateData) {
         const fields = [];
         const values = [];
@@ -149,7 +153,6 @@ class ProductRepository {
         const columnMap = {
             name: 'product_name',
             price: 'price',
-            stock: 'stock_quantity',
             status: 'availability'
         };
 
@@ -162,7 +165,9 @@ class ProductRepository {
 
         // Convert category name into its database ID
         if (updateData.category !== undefined) {
-            const categoryId = await this.findCategoryId(updateData.category);
+            const categoryId = await this.findCategoryId(
+                updateData.category
+            );
 
             fields.push('category_id = ?');
             values.push(categoryId);
@@ -183,7 +188,9 @@ class ProductRepository {
 
         const [result] = await db.execute(sql, values);
 
-        if (result.affectedRows === 0) return null;
+        if (result.affectedRows === 0) {
+            return null;
+        }
 
         return this.findById(id);
     }
@@ -195,10 +202,14 @@ class ProductRepository {
         try {
             await connection.beginTransaction();
 
-            const { action, quantity, reason } = adjustmentData;
+            const { action, quantity, reason, userId } =
+                adjustmentData;
 
-            // Temporary demo user: Owner account
-            const userId = adjustmentData.userId || 1;
+            if (!userId) {
+                throw new Error(
+                    'Authenticated user ID is required for stock adjustment.'
+                );
+            }
 
             // Lock product record to prevent conflicting stock updates
             const [rows] = await connection.execute(
@@ -210,12 +221,15 @@ class ProductRepository {
             );
 
             if (rows.length === 0) {
-                throw new Error(`Product with ID '${id}' not found.`);
+                throw new Error(
+                    `Product with ID '${id}' not found.`
+                );
             }
 
-            const currentStock = Number(rows[0].stock_quantity);
+            const currentStock = Number(
+                rows[0].stock_quantity
+            );
 
-            // Determine stock adjustment
             let movementType;
             let quantityChange;
 
@@ -226,13 +240,17 @@ class ProductRepository {
                 movementType = 'Adjustment Out';
                 quantityChange = -Number(quantity);
             } else {
-                throw new Error('Invalid stock adjustment action.');
+                throw new Error(
+                    'Invalid stock adjustment action.'
+                );
             }
 
             const newStock = currentStock + quantityChange;
 
             if (newStock < 0) {
-                throw new Error('Insufficient stock for this adjustment.');
+                throw new Error(
+                    'Insufficient stock for this adjustment.'
+                );
             }
 
             // Update product stock
@@ -306,13 +324,11 @@ class ProductRepository {
 
         const params = [];
 
-        // Optional product filter
         if (filter.productId) {
             sql += ` WHERE im.product_id = ?`;
             params.push(filter.productId);
         }
 
-        // Display newest movements first
         sql += `
             ORDER BY im.movement_date DESC, im.movement_id DESC
         `;
@@ -322,7 +338,9 @@ class ProductRepository {
         return rows;
     }
 
-    // Delete a product
+    // Permanently delete a product
+    // Kept for repository compatibility; normal service flow
+    // now uses deactivation instead.
     async delete(id) {
         const sql = `
             DELETE FROM products

@@ -1,3 +1,4 @@
+
 /* =========================================================
    CAFÉSENSE - PRODUCTS & INVENTORY
 ========================================================= */
@@ -8,13 +9,15 @@
 ========================================================= */
 
 import { productApi } from "../api/productApi.js";
+import { apiClient } from "../api/apiClient.js";
 
 const LOW_STOCK_LIMIT = 10;
-const STORAGE_KEY = "cafeSenseProducts";
 const SIDEBAR_STORAGE_KEY = "cafeSenseSidebarCollapsed";
 
 let products = [];
 let inventoryMovements = [];
+let currentUser = null;
+let isReadOnlyUser = false;
 
 
 /* =========================================================
@@ -23,45 +26,29 @@ let inventoryMovements = [];
 
 async function loadProducts() {
 
-    try {
+    const response = await productApi.getAll();
 
-        const response = await productApi.getAll();
-
-        if (!response.success || !Array.isArray(response.data)) {
-            throw new Error("The server returned an invalid product list.");
-        }
-
-        products = response.data.map(function (product) {
-
-            return {
-                id: String(product.id),
-                name: product.name,
-                category: product.category,
-                price: Number(product.price),
-                stock: Number(product.stock)
-            };
-
-        });
-
-        updateInventorySummary();
-        displayProducts();
-
-    } catch (error) {
-
-        console.error("Unable to load products from the server:", error);
-
-        products = [];
-        updateInventorySummary();
-        displayProducts();
-
-        await showAppDialog({
-            title: "Unable to Load Products",
-            message: "CaféSense could not retrieve products from the database. Please check that the server is running and try refreshing the page.",
-            icon: "fa-triangle-exclamation",
-            tone: "danger"
-        });
-
+    if (!response.success || !Array.isArray(response.data)) {
+        throw new Error("The server returned an invalid product list.");
     }
+
+    products = response.data.map(function (product) {
+
+        return {
+            id: String(product.id),
+            name: String(product.name || ""),
+            category: String(product.category || ""),
+            price: Number(product.price),
+            stock: Number(product.stock),
+            status: product.status || "Available"
+        };
+
+    });
+
+    updateInventorySummary();
+    displayProducts();
+
+    return products;
 
 }
 
@@ -338,41 +325,7 @@ function showAppDialog(options) {
 
 
 /* =========================================================
-   4. SAVE PRODUCTS
-========================================================= */
-
-function saveProducts() {
-
-    try {
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(products)
-        );
-
-        return true;
-
-    } catch (error) {
-
-        console.error("Unable to save products:", error);
-
-        showAppDialog({
-            type: "alert",
-            title: "Unable to Save Changes",
-            message: "Your product changes could not be saved in this browser. Your changes have been reverted.",
-            icon: "fa-triangle-exclamation",
-            tone: "danger"
-        });
-
-        return false;
-
-    }
-
-}
-
-
-/* =========================================================
-   5. GET HTML ELEMENTS
+   4. GET HTML ELEMENTS
 ========================================================= */
 
 // Sidebar
@@ -441,6 +394,36 @@ const refreshMovementHistoryBtn = document.getElementById("refreshMovementHistor
 const movementCount = document.getElementById("movementCount");
 const movementHistoryTableBody = document.getElementById("movementHistoryTableBody");
 const emptyMovementHistory = document.getElementById("emptyMovementHistory");
+
+
+/* =========================================================
+   5. STOCK FILTER SETUP
+========================================================= */
+
+function setupStockFilter() {
+
+    if (!stockFilter) {
+        return;
+    }
+
+    const unavailableOption = Array.from(stockFilter.options).find(
+        function (option) {
+            return option.value === "Unavailable";
+        }
+    );
+
+    if (!unavailableOption) {
+
+        const option = document.createElement("option");
+
+        option.value = "Unavailable";
+        option.textContent = "Unavailable";
+
+        stockFilter.appendChild(option);
+
+    }
+
+}
 
 
 /* =========================================================
@@ -816,15 +799,18 @@ function updateInventorySummary() {
     const total = products.length;
 
     const inStock = products.filter(function (product) {
-        return getStockStatus(product.stock) === "In Stock";
+        return product.status !== "Unavailable" &&
+            getStockStatus(product.stock) === "In Stock";
     }).length;
 
     const lowStock = products.filter(function (product) {
-        return getStockStatus(product.stock) === "Low Stock";
+        return product.status !== "Unavailable" &&
+            getStockStatus(product.stock) === "Low Stock";
     }).length;
 
     const outOfStock = products.filter(function (product) {
-        return getStockStatus(product.stock) === "Out of Stock";
+        return product.status !== "Unavailable" &&
+            getStockStatus(product.stock) === "Out of Stock";
     }).length;
 
 
@@ -882,9 +868,13 @@ function displayProducts() {
             selectedCategory === "all" ||
             product.category === selectedCategory;
 
+        const stockStatus = product.status === "Unavailable"
+            ? "Unavailable"
+            : getStockStatus(product.stock);
+
         const matchesStock =
             selectedStock === "all" ||
-            getStockStatus(product.stock) === selectedStock;
+            stockStatus === selectedStock;
 
         return matchesSearch && matchesCategory && matchesStock;
 
@@ -913,11 +903,17 @@ function displayProducts() {
 
     filteredProducts.forEach(function (product) {
 
-        const status = getStockStatus(product.stock);
+        const isUnavailable = product.status === "Unavailable";
+
+        const status = isUnavailable
+            ? "Unavailable"
+            : getStockStatus(product.stock);
 
         let statusClass = "";
 
-        if (status === "In Stock") {
+        if (isUnavailable) {
+            statusClass = "out-of-stock";
+        } else if (status === "In Stock") {
             statusClass = "in-stock";
         } else if (status === "Low Stock") {
             statusClass = "low-stock";
@@ -926,16 +922,56 @@ function displayProducts() {
         }
 
 
+        // STAFF CAN VIEW PRODUCTS BUT CANNOT MANAGE THEM.
+        const actionButtons = isReadOnlyUser
+            ? ""
+            : `
+                <button
+                    type="button"
+                    class="action-btn edit-btn"
+                    data-action="edit"
+                    data-id="${escapeHTML(product.id)}"
+                    title="Edit Product"
+                    aria-label="Edit ${escapeHTML(product.name)}">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+
+                <button
+                    type="button"
+                    class="action-btn stock-btn"
+                    data-action="stock"
+                    data-id="${escapeHTML(product.id)}"
+                    title="Adjust Stock"
+                    aria-label="Adjust stock for ${escapeHTML(product.name)}">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </button>
+
+                <button
+                    type="button"
+                    class="action-btn ${isUnavailable ? "edit-btn" : "delete-btn"}"
+                    data-action="${isUnavailable ? "activate" : "delete"}"
+                    data-id="${escapeHTML(product.id)}"
+                    title="${isUnavailable ? "Reactivate Product" : "Deactivate Product"}"
+                    aria-label="${isUnavailable ? "Reactivate" : "Deactivate"} ${escapeHTML(product.name)}">
+                    <i class="fa-solid ${isUnavailable ? "fa-rotate-left" : "fa-ban"}"></i>
+                </button>
+            `;
+
+
         const row = document.createElement("tr");
 
         row.innerHTML = `
 
             <td>
-                <span class="product-id">${escapeHTML(formatProductID(product.id))}</span>
+                <span class="product-id">
+                    ${escapeHTML(formatProductID(product.id))}
+                </span>
             </td>
 
             <td>
-                <span class="product-name">${escapeHTML(product.name)}</span>
+                <span class="product-name">
+                    ${escapeHTML(product.name)}
+                </span>
             </td>
 
             <td>
@@ -964,43 +1000,7 @@ function displayProducts() {
 
             <td>
                 <div class="action-buttons">
-
-                    <button
-                        type="button"
-                        class="action-btn edit-btn"
-                        data-action="edit"
-                        data-id="${escapeHTML(product.id)}"
-                        title="Edit Product"
-                        aria-label="Edit ${escapeHTML(product.name)}">
-
-                        <i class="fa-solid fa-pen"></i>
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="action-btn stock-btn"
-                        data-action="stock"
-                        data-id="${escapeHTML(product.id)}"
-                        title="Adjust Stock"
-                        aria-label="Adjust stock for ${escapeHTML(product.name)}">
-
-                        <i class="fa-solid fa-boxes-stacked"></i>
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="action-btn delete-btn"
-                        data-action="delete"
-                        data-id="${escapeHTML(product.id)}"
-                        title="Delete Product"
-                        aria-label="Delete ${escapeHTML(product.name)}">
-
-                        <i class="fa-solid fa-trash"></i>
-
-                    </button>
-
+                    ${actionButtons}
                 </div>
             </td>
 
@@ -1120,11 +1120,17 @@ async function loadInventoryMovements(productId = null) {
 
             emptyMovementHistory.style.display = "block";
 
-            emptyMovementHistory.querySelector("h3").textContent =
-                "Unable to Load History";
+            const heading = emptyMovementHistory.querySelector("h3");
+            const description = emptyMovementHistory.querySelector("p");
 
-            emptyMovementHistory.querySelector("p").textContent =
-                "Please check your server connection and try refreshing.";
+            if (heading) {
+                heading.textContent = "Unable to Load History";
+            }
+
+            if (description) {
+                description.textContent =
+                    "Please check your server connection and try refreshing.";
+            }
 
         }
 
@@ -1155,11 +1161,17 @@ function displayInventoryMovements() {
 
             emptyMovementHistory.style.display = "block";
 
-            emptyMovementHistory.querySelector("h3").textContent =
-                "No Movement Records Found";
+            const heading = emptyMovementHistory.querySelector("h3");
+            const description = emptyMovementHistory.querySelector("p");
 
-            emptyMovementHistory.querySelector("p").textContent =
-                "Inventory movements will appear here when stock changes are recorded.";
+            if (heading) {
+                heading.textContent = "No Movement Records Found";
+            }
+
+            if (description) {
+                description.textContent =
+                    "Inventory movements will appear here when stock changes are recorded.";
+            }
 
         }
 
@@ -1174,7 +1186,6 @@ function displayInventoryMovements() {
 
     inventoryMovements.forEach(function (movement) {
 
-        // Format date and time
         const movementDate = new Date(movement.movementDate);
 
         const formattedDate = Number.isNaN(movementDate.getTime())
@@ -1185,7 +1196,6 @@ function displayInventoryMovements() {
             });
 
 
-        // Determine movement badge style
         const movementType = String(movement.movementType || "");
 
         let movementClass = "default";
@@ -1201,7 +1211,6 @@ function displayInventoryMovements() {
         }
 
 
-        // Format quantity change
         const quantity = Number(movement.quantityChange);
 
         const quantityClass = quantity > 0
@@ -1215,7 +1224,6 @@ function displayInventoryMovements() {
             : String(quantity);
 
 
-        // Create table row
         const row = document.createElement("tr");
 
         row.innerHTML = `
@@ -1320,30 +1328,7 @@ if (refreshMovementHistoryBtn) {
 
 
 /* =========================================================
-   14. GENERATE PRODUCT ID
-========================================================= */
-
-function generateProductID() {
-
-    let highestNumber = 0;
-
-    products.forEach(function (product) {
-
-        const number = parseInt(product.id.replace("P", ""), 10);
-
-        if (!isNaN(number) && number > highestNumber) {
-            highestNumber = number;
-        }
-
-    });
-
-    return "P" + String(highestNumber + 1).padStart(3, "0");
-
-}
-
-
-/* =========================================================
-   15. PRODUCT FORM CHANGE TRACKING
+   14. PRODUCT FORM CHANGE TRACKING
 ========================================================= */
 
 let productFormInitialState = null;
@@ -1383,7 +1368,7 @@ function hasUnsavedProductChanges() {
 
 
 /* =========================================================
-   16. OPEN ADD PRODUCT MODAL
+   15. OPEN ADD PRODUCT MODAL
 ========================================================= */
 
 function openAddProductModal() {
@@ -1395,6 +1380,9 @@ function openAddProductModal() {
     productForm.reset();
 
     editProductId.value = "";
+
+    // RESTORE INITIAL STOCK INPUT FOR NEW PRODUCTS
+    productStock.readOnly = false;
 
     modalTitle.textContent = "Add New Product";
 
@@ -1413,7 +1401,7 @@ if (addProductBtn) {
 
 
 /* =========================================================
-   17. OPEN EDIT PRODUCT MODAL
+   16. OPEN EDIT PRODUCT MODAL
 ========================================================= */
 
 function openEditProductModal(id) {
@@ -1433,6 +1421,9 @@ function openEditProductModal(id) {
     productPrice.value = product.price;
     productStock.value = product.stock;
 
+    // STOCK IS MANAGED THROUGH ADJUST STOCK
+    productStock.readOnly = true;
+
     modalTitle.textContent = "Edit Product";
 
     setProductFormInitialState();
@@ -1445,7 +1436,7 @@ function openEditProductModal(id) {
 
 
 /* =========================================================
-   18. SAVE PRODUCT
+   17. SAVE PRODUCT
 ========================================================= */
 
 if (productForm) {
@@ -1453,6 +1444,18 @@ if (productForm) {
     productForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
+
+        if (isReadOnlyUser) {
+
+            await showAppDialog({
+                title: "Access Denied",
+                message: "You do not have permission to add or edit products.",
+                icon: "fa-lock",
+                tone: "warning"
+            });
+
+            return;
+        }
 
         const id = editProductId.value;
 
@@ -1462,21 +1465,25 @@ if (productForm) {
         const price = Number(productPrice.value);
         const stock = Number(productStock.value);
 
+        const isEditing = Boolean(id);
 
-        // VALIDATION
+
+        const isInvalidStock = !isEditing && (
+            !Number.isInteger(stock) ||
+            stock < 0
+        );
 
         if (
             name === "" ||
             category === "" ||
             !Number.isFinite(price) ||
             price <= 0 ||
-            !Number.isInteger(stock) ||
-            stock < 0
+            isInvalidStock
         ) {
 
             await showAppDialog({
                 title: "Invalid Product Information",
-                message: "Please enter a valid product name, category, price, and stock quantity.",
+                message: "Please enter a valid product name, category, price, and initial stock quantity.",
                 icon: "fa-circle-exclamation",
                 tone: "warning"
             });
@@ -1485,8 +1492,6 @@ if (productForm) {
 
         }
 
-
-        // CHECK DUPLICATE PRODUCT NAME
 
         const duplicateProduct = products.find(function (product) {
 
@@ -1509,15 +1514,11 @@ if (productForm) {
         }
 
 
-        // CONFIRMATION
-
-        const isEditing = Boolean(id);
-
         const confirmed = await showAppDialog({
             type: "confirm",
             title: isEditing ? "Confirm Product Update" : "Confirm New Product",
             message: isEditing
-                ? "Are you sure you want to save the changes to this product?"
+                ? "Are you sure you want to save the changes to this product? Stock quantity will remain unchanged."
                 : "Are you sure you want to add this product to your inventory?",
             icon: isEditing ? "fa-pen-to-square" : "fa-circle-plus",
             confirmText: isEditing ? "Yes, Update" : "Yes, Add Product"
@@ -1528,15 +1529,19 @@ if (productForm) {
         }
 
 
-        // PRODUCT DATA
-
         const productData = {
             name: name,
             category: category,
-            price: price,
-            stock: stock
+            price: price
         };
 
+        if (!isEditing) {
+            productData.stock = stock;
+        }
+
+
+        // TRACK WHETHER THE DATABASE OPERATION SUCCEEDED
+        let mutationSaved = false;
 
         try {
 
@@ -1550,22 +1555,18 @@ if (productForm) {
 
             }
 
+            mutationSaved = true;
+
 
             // RETRIEVE UPDATED PRODUCTS FROM MYSQL
-
             await loadProducts();
 
             populateMovementProductFilter();
 
-            // Refresh movement history in case product creation
-            // generated an initial inventory movement.
             await loadInventoryMovements(
                 getSelectedMovementProductId()
             );
 
-
-            updateInventorySummary();
-            displayProducts();
 
             closeProductFormModal();
 
@@ -1573,7 +1574,7 @@ if (productForm) {
             await showAppDialog({
                 title: isEditing ? "Product Updated" : "Product Added",
                 message: isEditing
-                    ? "The product information has been updated successfully."
+                    ? "The product information has been updated successfully. Its stock quantity was not changed."
                     : "The new product has been saved to the database successfully.",
                 icon: "fa-circle-check",
                 tone: "success"
@@ -1584,9 +1585,20 @@ if (productForm) {
 
             console.error("Unable to save product:", error);
 
+            if (mutationSaved) {
+
+                // AVOID RESUBMITTING A PRODUCT THAT WAS ALREADY SAVED
+                closeProductFormModal();
+
+            }
+
             await showAppDialog({
-                title: "Unable to Save Product",
-                message: error.message || "Something went wrong while saving the product. Please try again.",
+                title: mutationSaved
+                    ? "Product Saved, Refresh Failed"
+                    : "Unable to Save Product",
+                message: mutationSaved
+                    ? "The database operation succeeded, but the latest product list could not be retrieved. Please refresh the page to verify the updated records."
+                    : error.message || "Something went wrong while saving the product. Please try again.",
                 icon: "fa-triangle-exclamation",
                 tone: "danger"
             });
@@ -1599,7 +1611,7 @@ if (productForm) {
 
 
 /* =========================================================
-   19. CLOSE PRODUCT MODAL
+   18. CLOSE PRODUCT MODAL
 ========================================================= */
 
 function closeProductFormModal() {
@@ -1613,6 +1625,9 @@ function closeProductFormModal() {
     productForm.reset();
 
     editProductId.value = "";
+
+    // RESTORE THE DEFAULT STATE FOR THE NEXT ADD/EDIT ACTION
+    productStock.readOnly = false;
 
     productFormInitialState = null;
 
@@ -1657,7 +1672,7 @@ if (cancelProductBtn) {
 
 
 /* =========================================================
-   20. DELETE PRODUCT
+   19. DEACTIVATE PRODUCT
 ========================================================= */
 
 async function deleteProduct(id) {
@@ -1673,11 +1688,11 @@ async function deleteProduct(id) {
 
     const confirmed = await showAppDialog({
         type: "confirm",
-        title: "Confirm Product Deletion",
-        message: `Are you sure you want to permanently delete "${product.name}" from your inventory?`,
-        icon: "fa-trash",
-        tone: "danger",
-        confirmText: "Yes, Delete",
+        title: "Confirm Product Deactivation",
+        message: `Are you sure you want to mark "${product.name}" as unavailable? It will remain in your records and can be reactivated later.`,
+        icon: "fa-ban",
+        tone: "warning",
+        confirmText: "Yes, Deactivate",
         cancelText: "Cancel"
     });
 
@@ -1686,10 +1701,17 @@ async function deleteProduct(id) {
     }
 
 
+    let mutationSaved = false;
+
     try {
 
-        await productApi.delete(id);
+        // SOFT DEACTIVATION THROUGH THE API
+        await productApi.deactivate(id);
 
+        mutationSaved = true;
+
+
+        // REFRESH PRODUCTS FROM MYSQL
         await loadProducts();
 
         populateMovementProductFilter();
@@ -1699,13 +1721,9 @@ async function deleteProduct(id) {
         );
 
 
-        updateInventorySummary();
-        displayProducts();
-
-
         await showAppDialog({
-            title: "Product Deleted",
-            message: `"${product.name}" has been successfully removed from your inventory.`,
+            title: "Product Deactivated",
+            message: `"${product.name}" is now unavailable and has been kept in your inventory records.`,
             icon: "fa-circle-check",
             tone: "success"
         });
@@ -1713,11 +1731,94 @@ async function deleteProduct(id) {
 
     } catch (error) {
 
-        console.error("Unable to delete product:", error);
+        console.error("Unable to deactivate product:", error);
 
         await showAppDialog({
-            title: "Unable to Delete Product",
-            message: error.message || "Something went wrong while deleting the product. Please try again.",
+            title: mutationSaved
+                ? "Product Deactivated, Refresh Failed"
+                : "Unable to Deactivate Product",
+            message: mutationSaved
+                ? "The product was successfully deactivated, but the latest product list could not be retrieved. Please refresh the page."
+                : error.message || "Something went wrong while deactivating the product. Please try again.",
+            icon: "fa-triangle-exclamation",
+            tone: "danger"
+        });
+
+    }
+
+}
+
+
+/* =========================================================
+   20. REACTIVATE PRODUCT
+========================================================= */
+
+async function activateProduct(id) {
+
+    const product = products.find(function (item) {
+        return item.id === id;
+    });
+
+    if (!product) {
+        return;
+    }
+
+
+    const confirmed = await showAppDialog({
+        type: "confirm",
+        title: "Reactivate Product",
+        message: `Are you sure you want to make "${product.name}" available again?`,
+        icon: "fa-rotate-left",
+        tone: "warning",
+        confirmText: "Yes, Reactivate",
+        cancelText: "Cancel"
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    let mutationSaved = false;
+
+    try {
+
+        // UPDATE PRODUCT STATUS THROUGH THE API
+        await productApi.update(id, {
+            status: "Available"
+        });
+
+        mutationSaved = true;
+
+
+        // REFRESH PRODUCTS FROM MYSQL
+        await loadProducts();
+
+        populateMovementProductFilter();
+
+        await loadInventoryMovements(
+            getSelectedMovementProductId()
+        );
+
+
+        await showAppDialog({
+            title: "Product Reactivated",
+            message: `"${product.name}" is now available again.`,
+            icon: "fa-circle-check",
+            tone: "success"
+        });
+
+    } catch (error) {
+
+        console.error("Unable to reactivate product:", error);
+
+        await showAppDialog({
+            title: mutationSaved
+                ? "Product Reactivated, Refresh Failed"
+                : "Unable to Reactivate Product",
+            message: mutationSaved
+                ? "The product was successfully reactivated, but the latest product list could not be retrieved. Please refresh the page."
+                : error.message || "Something went wrong while reactivating the product. Please try again.",
             icon: "fa-triangle-exclamation",
             tone: "danger"
         });
@@ -1766,7 +1867,20 @@ if (stockForm) {
 
         event.preventDefault();
 
+        if (isReadOnlyUser) {
+
+            await showAppDialog({
+                title: "Access Denied",
+                message: "You do not have permission to adjust product stock.",
+                icon: "fa-lock",
+                tone: "warning"
+            });
+
+            return;
+        }
+
         const id = stockProductId.value;
+
         const action = stockAction.value;
         const quantity = Number(stockQuantity.value);
         const reason = stockReason.value.trim();
@@ -1856,6 +1970,7 @@ if (stockForm) {
 
         }
 
+
         const confirmed = await showAppDialog({
             type: "confirm",
             title: "Confirm Stock Adjustment",
@@ -1894,9 +2009,9 @@ if (stockForm) {
             return;
         }
 
+
         try {
 
-            // Send stock adjustment to the backend
             const response = await productApi.adjustStock(id, {
                 action: action,
                 quantity: quantity,
@@ -1909,17 +2024,19 @@ if (stockForm) {
                 );
             }
 
-            // Use the updated stock returned by the database
+
+            // USE THE UPDATED STOCK RETURNED BY THE DATABASE
             product.stock = Number(response.data.stock);
 
-            // Refresh inventory display
             updateInventorySummary();
             displayProducts();
 
-            // Refresh movement history after successful adjustment
+
+            // REFRESH MOVEMENT HISTORY
             await loadInventoryMovements(
                 getSelectedMovementProductId()
             );
+
 
             closeStockFormModal();
 
@@ -1984,6 +2101,20 @@ if (productTableBody) {
             return;
         }
 
+
+        if (isReadOnlyUser) {
+
+            showAppDialog({
+                title: "Access Denied",
+                message: "You do not have permission to manage products.",
+                icon: "fa-lock",
+                tone: "warning"
+            });
+
+            return;
+        }
+
+
         const action = button.dataset.action;
         const id = button.dataset.id;
 
@@ -1999,6 +2130,10 @@ if (productTableBody) {
         } else if (action === "delete") {
 
             deleteProduct(id);
+
+        } else if (action === "activate") {
+
+            activateProduct(id);
 
         }
 
@@ -2282,11 +2417,30 @@ function setupLogout() {
         cancelButton.addEventListener("click", closeLogoutModal);
 
 
-        confirmButton.addEventListener("click", function () {
+        confirmButton.addEventListener("click", async function () {
 
-            sessionStorage.clear();
+            confirmButton.disabled = true;
 
-            window.location.href = "./login.html";
+            try {
+
+                await apiClient.post("/auth/logout", {});
+
+                window.location.replace("./login.html");
+
+            } catch (error) {
+
+                console.error("Logout failed:", error);
+
+                confirmButton.disabled = false;
+
+                await showAppDialog({
+                    title: "Logout Failed",
+                    message: "Unable to sign out. Please try again.",
+                    icon: "fa-triangle-exclamation",
+                    tone: "danger"
+                });
+
+            }
 
         });
 
@@ -2392,17 +2546,168 @@ function getSelectedMovementProductId() {
    32. INITIALIZE PAGE
 ========================================================= */
 
-async function initializeProductsPage() {
+// =========================================================
+// AUTHENTICATION AND ROLE MANAGEMENT
+// =========================================================
 
-    updateCurrentDateTime();
+function updateUserProfile(user) {
 
-    await loadProducts();
+    const fullName = user.fullName || user.username || "User";
 
-    populateMovementProductFilter();
+    const role = String(user.role || "Staff").trim();
 
-    await loadInventoryMovements();
+    const normalizedRole = role.toLowerCase();
+
+    const isOwner = normalizedRole === "owner";
+    const canManageProducts = isOwner || normalizedRole === "manager";
+
+    isReadOnlyUser = !canManageProducts;
+
+
+    const nameElement = document.getElementById("display-user-name");
+
+    if (nameElement) {
+        nameElement.textContent = fullName;
+    }
+
+
+    const roleElement = document.getElementById("display-user-role");
+
+    if (roleElement) {
+        roleElement.textContent = role;
+    }
+
+
+    const badgeElement = document.getElementById("role-badge");
+
+    if (badgeElement) {
+        badgeElement.textContent = `${role} Portal`;
+    }
+
+
+    const avatarElement = document.getElementById("display-user-avatar");
+
+    if (avatarElement) {
+
+        const initials = fullName
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(name => name.charAt(0).toUpperCase())
+            .join("");
+
+        avatarElement.textContent = initials || "U";
+    }
+
+
+    document.querySelectorAll(".owner-only").forEach(element => {
+        element.style.display = isOwner ? "" : "none";
+    });
+
+
+    document.querySelectorAll(".owner-manager-only").forEach(element => {
+        element.style.display = canManageProducts ? "" : "none";
+    });
+
+
+    const addProductButton = document.getElementById("addProductBtn");
+
+    if (addProductButton) {
+        addProductButton.style.display = canManageProducts ? "" : "none";
+    }
 
 }
 
+
+// =========================================================
+// VERIFY AUTHENTICATION
+// =========================================================
+
+async function verifyAuthentication() {
+
+    try {
+
+        const response = await apiClient.get("/auth/me");
+
+        if (!response.success || !response.data?.user) {
+
+            window.location.replace("./login.html");
+
+            return null;
+        }
+
+        currentUser = response.data.user;
+
+        updateUserProfile(currentUser);
+
+        return currentUser;
+
+    } catch (error) {
+
+        console.error("Products authentication failed:", error);
+
+        if ([401, 403, 404].includes(error.status)) {
+
+            window.location.replace("./login.html");
+
+            return null;
+        }
+
+        document.body.innerHTML = `
+            <main style="max-width:600px;margin:80px auto;padding:24px;text-align:center;font-family:Arial,sans-serif;">
+                <h2>Unable to Verify Your Session</h2>
+                <p>Please make sure the CaféSense backend is running, then try again.</p>
+                <button onclick="window.location.reload()">Retry</button>
+            </main>
+        `;
+
+        return null;
+    }
+
+}
+
+
+// =========================================================
+// INITIALIZE PRODUCTS PAGE
+// =========================================================
+
+async function initializeProductsPage() {
+
+    const user = await verifyAuthentication();
+
+    if (!user) {
+        return;
+    }
+
+    updateCurrentDateTime();
+
+    // ADD THE UNAVAILABLE OPTION BEFORE FILTERING
+    setupStockFilter();
+
+    try {
+
+        await loadProducts();
+
+        populateMovementProductFilter();
+
+        if (!isReadOnlyUser) {
+            await loadInventoryMovements();
+        }
+
+    } catch (error) {
+
+        console.error("Products page initialization failed:", error);
+
+        await showAppDialog({
+            title: "Unable to Load Products",
+            message: "CaféSense could not retrieve the latest product records. Please check your server connection and refresh the page.",
+            icon: "fa-triangle-exclamation",
+            tone: "danger"
+        });
+
+    }
+
+}
 
 initializeProductsPage();

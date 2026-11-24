@@ -1,6 +1,4 @@
-/**
- * Centralized API Client (Frontend Data Access Layer)
- */
+
 class ApiClient {
     constructor(baseURL = 'http://localhost:5000/api/v1') {
         this.baseURL = baseURL;
@@ -8,52 +6,82 @@ class ApiClient {
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             ...options.headers
         };
 
-        const config = { ...options, headers };
+        const config = {
+            ...options,
+            headers,
+            credentials: 'include'
+        };
 
         try {
             const response = await fetch(url, config);
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                const errorMessage = data.message || `HTTP error! status: ${response.status}`;
+                const errorMessage =
+                    data.message || `HTTP error! status: ${response.status}`;
+
                 const error = new Error(errorMessage);
                 error.status = response.status;
                 error.data = data;
+
                 throw error;
             }
 
             return data;
+
         } catch (error) {
-            console.error(`[ApiClient Error] ${options.method || 'GET'} ${url}:`, error.message);
+            console.error(
+                `[ApiClient Error] ${options.method || 'GET'} ${url}:`,
+                error.message
+            );
+
             throw error;
         }
     }
 
     get(endpoint, headers = {}) {
-        return this.request(endpoint, { method: 'GET', headers });
+        return this.request(endpoint, {
+            method: 'GET',
+            headers
+        });
     }
 
     post(endpoint, body, headers = {}) {
-        return this.request(endpoint, { method: 'POST', body: JSON.stringify(body), headers });
+        return this.request(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(body),
+            headers
+        });
     }
 
     put(endpoint, body, headers = {}) {
-        return this.request(endpoint, { method: 'PUT', body: JSON.stringify(body), headers });
+        return this.request(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+            headers
+        });
     }
 
-    // Send PATCH requests
     patch(endpoint, body, headers = {}) {
-        return this.request(endpoint, { method: 'PATCH', body: JSON.stringify(body), headers });
+        return this.request(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+            headers
+        });
     }
 
     delete(endpoint, headers = {}) {
-        return this.request(endpoint, { method: 'DELETE', headers });
+        return this.request(endpoint, {
+            method: 'DELETE',
+            headers
+        });
     }
 }
 

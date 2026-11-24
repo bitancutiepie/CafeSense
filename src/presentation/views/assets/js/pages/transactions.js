@@ -1,7 +1,115 @@
+
 import { transactionApi } from '../api/transactionApi.js';
 import { productApi } from '../api/productApi.js';
+import { apiClient } from '../api/apiClient.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+    // ==========================================
+    // AUTHENTICATION CHECK
+    // ==========================================
+
+    try {
+        const response = await apiClient.get("/auth/me");
+
+        if (!response.success || !response.data?.user) {
+            window.location.replace("login.html");
+            return;
+        }
+
+        const currentUser = response.data.user;
+
+        // Owner, Manager, and Staff can access Transactions.
+        const allowedRoles = ["owner", "manager", "staff"];
+
+        const currentRole = String(currentUser.role || "")
+            .trim()
+            .toLowerCase();
+
+        if (!allowedRoles.includes(currentRole)) {
+            window.location.replace("dashboard.html");
+            return;
+        }
+
+        // ==========================================
+        // UPDATE LOGGED-IN USER PROFILE
+        // ==========================================
+
+        const fullName = currentUser.fullName || currentUser.username;
+        const roleName = String(currentUser.role || "Staff").trim();
+        const normalizedRole = roleName.toLowerCase();
+
+        const displayName = document.getElementById("display-user-name");
+
+        if (displayName) {
+            displayName.textContent = fullName;
+        }
+
+        const displayRole = document.getElementById("display-user-role")
+            || document.querySelector(".user-role");
+
+        if (displayRole) {
+            displayRole.textContent = roleName;
+        }
+
+        const avatar = document.getElementById("display-user-avatar")
+            || document.querySelector(".user-avatar-placeholder");
+
+        if (avatar) {
+            const initials = fullName
+                .split(" ")
+                .filter(part => part.length > 0)
+                .map(part => part[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase();
+
+            avatar.textContent = initials;
+        }
+
+        const roleBadge = document.getElementById("role-badge")
+            || document.querySelector(".role-badge");
+
+        if (roleBadge) {
+            roleBadge.textContent = `${roleName} Portal`;
+        }
+
+        // ==========================================
+        // ROLE-BASED SIDEBAR VISIBILITY
+        // ==========================================
+
+        document.querySelectorAll(".owner-manager-only").forEach(section => {
+            section.style.display =
+                ["owner", "manager"].includes(normalizedRole)
+                    ? ""
+                    : "none";
+        });
+
+        document.querySelectorAll(".owner-only").forEach(section => {
+            section.style.display =
+                normalizedRole === "owner"
+                    ? ""
+                    : "none";
+        });
+
+    } catch (error) {
+        console.error("Transactions authentication failed:", error);
+
+        if ([401, 403, 404].includes(error.status)) {
+            window.location.replace("login.html");
+            return;
+        }
+
+        document.body.innerHTML = `
+            <main style="max-width:600px;margin:80px auto;padding:24px;text-align:center;font-family:Arial,sans-serif;">
+                <h2>Unable to Verify Your Session</h2>
+                <p>Please make sure the CaféSense backend is running, then try again.</p>
+                <button onclick="window.location.reload()">Retry</button>
+            </main>
+        `;
+
+        return;
+    }
 
     // ==========================================
     // 1. LOCAL STORAGE AND DEFAULT PRODUCTS
@@ -40,30 +148,111 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 3. PRODUCT ICONS
     // ==========================================
 
-    function getProductIcon(product) {
+function getProductIcon(product) {
+    const name = product.name?.trim().toLowerCase() || "";
+    const category = product.category?.trim().toLowerCase() || "";
 
-    const icons = {
-        "Café Latte": "☕",
-        "Americano": "☕",
-        "Cappuccino": "☕",
-        "Caramel Macchiato": "🧋",
-        "Spanish Latte": "☕",
-        "Matcha Latte": "🍵",
-        "Chocolate Milk": "🥤",
-        "Strawberry Milk": "🥛",
-        "Blueberry Cheesecake": "🍰",
-        "Strawberry Muffin": "🧁",
-        "Croissant": "🥐",
-        "Chocolate Chip Cookie": "🍪"
-    };
+    // ==========================================
+    // KEYWORD-BASED ICON DETECTION
+    // ==========================================
 
-    // Preserve existing product-specific icons
-    if (icons[product.name]) {
-        return icons[product.name];
+    // Coffee-based drinks
+    if (
+        name.includes("frappe") ||
+        name.includes("frappé")
+    ) {
+        return "🥤";
     }
 
-    // Use the product category for newly added products
-    const category = product.category?.trim().toLowerCase();
+    if (
+        name.includes("strawberry")
+    ) {
+        return "🍓";
+    }
+
+    if (name.includes("blueberry")) {
+        return "🫐";
+    }
+
+    if (name.includes("mango")) {
+        return "🥭";
+    }
+
+    if (name.includes("matcha")) {
+        return "🍵";
+    }
+
+    if (
+        name.includes("chocolate") &&
+        (name.includes("milk") || name.includes("drink"))
+    ) {
+        return "🥛";
+    }
+
+    if (name.includes("milk")
+    ) {
+        return "🥛";
+    }
+
+    if (
+        name.includes("americano") ||
+        name.includes("cappuccino") ||
+        name.includes("macchiato") ||
+        name.includes("espresso") ||
+        name.includes("coffee") ||
+        name.includes("latte")
+    ) {
+        return "☕";
+    }
+
+    if (
+        name.includes("iced tea") ||
+        name.includes("tea")
+    ) {
+        return "🧋";
+    }
+
+    if (
+        name.includes("cheesecake") ||
+        name.includes("cake")
+    ) {
+        return "🍰";
+    }
+
+    if (
+        name.includes("muffin")
+    ) {
+        return "🧁";
+    }
+
+    if (
+        name.includes("croissant")
+    ) {
+        return "🥐";
+    }
+
+    if (
+        name.includes("cookie") ||
+        name.includes("cookies")
+    ) {
+        return "🍪";
+    }
+
+    if (
+        name.includes("cinnamon roll")
+    ) {
+        return "🥐";
+    }
+
+    if (
+        name.includes("graham")
+    ) {
+        return "🍰";
+    }
+
+    // ==========================================
+    // CATEGORY-BASED FALLBACK
+    // ==========================================
 
     const categoryIcons = {
         "coffee": "☕",
@@ -73,6 +262,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     return categoryIcons[category] || "📦";
 }
+
     // ==========================================
     // 4. HTML ELEMENTS
     // ==========================================
@@ -108,16 +298,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentDateElement = document.getElementById("current-date");
     const currentTimeElement = document.getElementById("current-time");
 
-    // Sidebar elements
     const sidebar = document.getElementById("sidebar");
-
-    // Desktop sidebar toggle
     const sidebarToggle = document.getElementById("sidebarToggle");
-
-    // Mobile sidebar toggle
     const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
-
-    // Mobile sidebar close button
     const sidebarClose = document.getElementById("sidebarClose");
 
     const analyticsDropdownToggle = document.getElementById(
@@ -154,14 +337,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ==========================================
 
     function roundMoney(amount) {
-
         return Math.round(
             (Number(amount) + Number.EPSILON) * 100
         ) / 100;
     }
 
     function formatPrice(amount) {
-
         return "₱" + Number(amount).toLocaleString("en-PH", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -169,7 +350,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function getCurrentDate() {
-
         return new Date().toLocaleString("en-PH", {
             year: "numeric",
             month: "long",
@@ -184,7 +364,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function escapeHTML(value) {
-
         return String(value).replace(/[&<>"']/g, character => ({
             "&": "&amp;",
             "<": "&lt;",
@@ -195,14 +374,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function getProductById(productId) {
-
         return products.find(
             product => String(product.id) === String(productId)
         );
     }
 
     function getProductQuantityInCart(productId) {
-
         return cart
             .filter(item => String(item.id) === String(productId))
             .reduce((total, item) => total + item.quantity, 0);
@@ -239,7 +416,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (activeConfirmation) return;
 
         const isConfirmation = typeof onConfirm === "function";
-
         const previousFocus = document.activeElement;
 
         const iconMap = {
@@ -339,6 +515,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             activeConfirmation = null;
 
             setTimeout(() => {
+
                 overlay.remove();
 
                 if (
@@ -358,10 +535,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         function handleDialogKeydown(event) {
 
             if (event.key === "Escape") {
-
                 event.preventDefault();
                 closeDialog();
-
                 return;
             }
 
@@ -465,6 +640,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         if (danger) {
+
             requestAnimationFrame(() => {
 
                 const dialog = document.querySelector(
@@ -484,57 +660,55 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadProducts() {
 
-    try {
+        try {
 
-        const response = await productApi.getAll();
+            const response = await productApi.getAll();
 
-        const databaseProducts = response.data;
+            const databaseProducts = response.data;
 
-        if (!Array.isArray(databaseProducts)) {
-            throw new Error("Invalid product data received from the API.");
+            if (!Array.isArray(databaseProducts)) {
+                throw new Error("Invalid product data received from the API.");
+            }
+
+            inventoryLoadError = false;
+
+            return databaseProducts.map(product => ({
+                id: String(product.id),
+                name: String(product.name),
+
+                category: String(product.category).trim() === "Pastries"
+                    ? "Pastry / Baked Good"
+                    : String(product.category),
+
+                price: Number(product.price),
+                stock: Number(product.stock),
+                status: product.status
+            }));
+
+        } catch (error) {
+
+            console.error("Unable to load products from database:", error);
+
+            inventoryLoadError = true;
+
+            return [];
+        }
+    }
+
+    async function refreshProducts() {
+
+        const updatedProducts = await loadProducts();
+
+        if (inventoryLoadError) {
+            throw new Error(
+                "Unable to refresh inventory from the database."
+            );
         }
 
-        inventoryLoadError = false;
+        products = updatedProducts;
 
-        return databaseProducts.map(product => ({
-            id: String(product.id),
-            name: String(product.name),
-
-            category: String(product.category).trim() === "Pastries"
-                ? "Pastry / Baked Good"
-                : String(product.category),
-
-            price: Number(product.price),
-            stock: Number(product.stock),
-            status: product.status
-        }));
-
-    } catch (error) {
-
-        console.error("Unable to load products from database:", error);
-
-        inventoryLoadError = true;
-
-        return [];
+        displayProducts();
     }
-}
-
-
-// Refresh products from the database
-async function refreshProducts() {
-
-    const updatedProducts = await loadProducts();
-
-    if (inventoryLoadError) {
-        throw new Error(
-            "Unable to refresh inventory from the database."
-        );
-    }
-
-    products = updatedProducts;
-
-    displayProducts();
-}
 
     // ==========================================
     // 9. LOAD COMPLETED TRANSACTIONS
@@ -542,34 +716,34 @@ async function refreshProducts() {
 
     async function loadTransactions() {
 
-    try {
+        try {
 
-        const response = await transactionApi.getAll();
+            const response = await transactionApi.getAll();
 
-        const databaseTransactions = response.data;
+            const databaseTransactions = response.data;
 
-        if (!Array.isArray(databaseTransactions)) {
-            throw new Error("Invalid transaction data received from the API.");
+            if (!Array.isArray(databaseTransactions)) {
+                throw new Error("Invalid transaction data received from the API.");
+            }
+
+            return databaseTransactions;
+
+        } catch (error) {
+
+            console.error(
+                "Unable to load transactions from database:",
+                error
+            );
+
+            showMessage(
+                "Transaction History Error",
+                "Unable to retrieve transaction history from the database. Please try again.",
+                "error"
+            );
+
+            return [];
         }
-
-        return databaseTransactions;
-
-    } catch (error) {
-
-        console.error(
-            "Unable to load transactions from database:",
-            error
-        );
-
-        showMessage(
-            "Transaction History Error",
-            "Unable to retrieve transaction history from the database. Please try again.",
-            "error"
-        );
-
-        return [];
     }
-}
 
     products = await loadProducts();
     completedTransactions = await loadTransactions();
@@ -645,7 +819,10 @@ async function refreshProducts() {
                         : "";
 
             return `
-                <div class="product-card">
+                <div
+                    class="product-card"
+                    data-product-id="${escapeHTML(product.id)}"
+                >
 
                     <div class="product-image">
                         <span>${getProductIcon(product)}</span>
@@ -1584,140 +1761,172 @@ async function refreshProducts() {
     }
 
     // ==========================================
+    // CUSTOMER COUNT CONFIRMATION
+    // ==========================================
+
+    function confirmCustomerCountBeforeCheckout() {
+
+        if (checkoutInProgress) return;
+
+        calculateOrder();
+
+        if (!validateCheckout()) return;
+
+        const customerCount = Number(customerCountInput.value);
+
+        showConfirmation({
+
+            title: "Confirm Customer Count",
+
+            message:
+                `You entered ${customerCount} customer(s) for this transaction. ` +
+                "Please make sure this matches the actual number of customers before proceeding.",
+
+            confirmText: "Confirm & Continue",
+
+            cancelText: "Go Back / Edit Count",
+
+            icon: "fa-users",
+
+            danger: false,
+
+            onConfirm: completeCheckout
+
+        });
+    }
+
+    // ==========================================
     // 22. COMPLETE TRANSACTION
     // ==========================================
 
     async function completeCheckout() {
 
-    if (checkoutInProgress) return;
+        if (checkoutInProgress) return;
 
-    calculateOrder();
+        calculateOrder();
 
-    if (!validateCheckout()) return;
+        if (!validateCheckout()) return;
 
-    checkoutInProgress = true;
+        checkoutInProgress = true;
 
-    if (checkoutBtn) {
-        checkoutBtn.disabled = true;
-    }
-
-    try {
-
-        const selectedPayment = paymentMethod.value;
-
-        const amountReceived =
-            selectedPayment === "Cash"
-                ? Number(cashReceived.value)
-                : currentTotal;
-
-        const customerCount = Number(
-            customerCountInput.value
-        );
-
-        // Prepare transaction data for the backend
-        const transactionData = {
-
-            paymentMethod: selectedPayment,
-
-            customerCount: customerCount,
-
-            amountReceived: amountReceived,
-
-            items: cart.map(item => ({
-                productId: Number(item.id),
-                quantity: Number(item.quantity),
-                customerType: item.customerType
-            }))
-
-        };
-
-        // Send transaction to the backend
-        const response = await transactionApi.create(
-            transactionData
-        );
-
-        const transaction = response.data;
-
-        if (!transaction || !transaction.transactionId) {
-            throw new Error(
-                "Invalid transaction response from the server."
-            );
+        if (checkoutBtn) {
+            checkoutBtn.disabled = true;
         }
 
-        // Keep the completed transaction available in this session
-        completedTransactions.unshift(transaction);
-
-        // Generate receipt using backend transaction data
-        generateReceipt(transaction);
-
-        if (receiptModal) {
-            receiptModal.style.display = "flex";
-            receiptModal.classList.add("active");
-            receiptModal.setAttribute("aria-hidden", "false");
-        }
-
-        // Clear the cart after successful database checkout
-        cart = [];
-
-        resetCustomerCount();
-
-        if (cashReceived) {
-            cashReceived.value = "";
-        }
-
-        if (paymentMethod) {
-            paymentMethod.value = "Cash";
-        }
-
-        updateCart();
-        updatePaymentMethod();
-
-        console.log(
-            "Completed database transaction:",
-            transaction
-        );
-
-        // Refresh inventory using the latest database records
         try {
 
-            await refreshProducts();
+            const selectedPayment = paymentMethod.value;
 
-        } catch (refreshError) {
+            const amountReceived =
+                selectedPayment === "Cash"
+                    ? Number(cashReceived.value)
+                    : currentTotal;
 
-            console.error(
-                "Transaction succeeded, but inventory refresh failed:",
-                refreshError
+            const customerCount = Number(
+                customerCountInput.value
             );
+
+            const transactionData = {
+
+                paymentMethod: selectedPayment,
+
+                customerCount: customerCount,
+
+                amountReceived: amountReceived,
+
+                items: cart.map(item => ({
+                    productId: Number(item.id),
+                    quantity: Number(item.quantity),
+                    customerType: item.customerType
+                }))
+
+            };
+
+            const response = await transactionApi.create(
+                transactionData
+            );
+
+            const transaction = response.data;
+
+            if (!transaction || !transaction.transactionId) {
+                throw new Error(
+                    "Invalid transaction response from the server."
+                );
+            }
+
+            completedTransactions.unshift(transaction);
+
+            generateReceipt(transaction);
+
+            if (receiptModal) {
+                receiptModal.style.display = "flex";
+                receiptModal.classList.add("active");
+                receiptModal.setAttribute("aria-hidden", "false");
+            }
+
+            cart = [];
+
+            resetCustomerCount();
+
+            if (cashReceived) {
+                cashReceived.value = "";
+            }
+
+            if (paymentMethod) {
+                paymentMethod.value = "Cash";
+            }
+
+            updateCart();
+            updatePaymentMethod();
+
+            console.log(
+                "Completed database transaction:",
+                transaction
+            );
+
+            try {
+
+                await refreshProducts();
+
+            } catch (refreshError) {
+
+                console.error(
+                    "Transaction succeeded, but inventory refresh failed:",
+                    refreshError
+                );
+
+                showMessage(
+                    "Transaction Completed",
+                    "Your transaction was saved, but the inventory display could not be refreshed. Please reload the page.",
+                    "warning"
+                );
+            }
+
+        } catch (error) {
+
+            console.error("Checkout error:", error);
 
             showMessage(
-                "Transaction Completed",
-                "Your transaction was saved, but the inventory display could not be refreshed. Please reload the page.",
-                "warning"
+                "Transaction Failed",
+                error.message || "The transaction could not be completed. Please try again.",
+                "error"
             );
+
+        } finally {
+
+            checkoutInProgress = false;
+
+            updateCart();
+
         }
-
-    } catch (error) {
-
-        console.error("Checkout error:", error);
-
-        showMessage(
-            "Transaction Failed",
-            error.message || "The transaction could not be completed. Please try again.",
-            "error"
-        );
-
-    } finally {
-
-        checkoutInProgress = false;
-
-        updateCart();
-
     }
-}
 
-if (checkoutBtn) {
-    checkoutBtn.addEventListener("click", completeCheckout);
-}
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener(
+            "click",
+            confirmCustomerCountBeforeCheckout
+        );
+    }
 
     // ==========================================
     // 23. CLOSE RECEIPT
@@ -1963,7 +2172,6 @@ if (checkoutBtn) {
         return mobileBreakpoint.matches;
     }
 
-    // Update desktop toggle accessibility state
     function updateDesktopToggleState() {
 
         if (!sidebarToggle || !sidebar) return;
@@ -1986,7 +2194,6 @@ if (checkoutBtn) {
         );
     }
 
-    // Update mobile toggle accessibility state
     function updateMobileToggleState(isOpen) {
 
         if (!mobileSidebarToggle) return;
@@ -2007,7 +2214,6 @@ if (checkoutBtn) {
         );
     }
 
-    // Apply saved desktop sidebar preference
     function applyDesktopSidebarState() {
 
         if (!sidebar) return;
@@ -2026,7 +2232,6 @@ if (checkoutBtn) {
         updateMobileToggleState(false);
     }
 
-    // Open mobile sidebar
     function openMobileSidebar() {
 
         if (!sidebar || !isMobileView()) return;
@@ -2038,7 +2243,6 @@ if (checkoutBtn) {
         updateMobileToggleState(true);
     }
 
-    // Close mobile sidebar
     function closeMobileSidebar() {
 
         if (!sidebar) return;
@@ -2058,7 +2262,6 @@ if (checkoutBtn) {
 
         sidebarToggle.addEventListener("click", () => {
 
-            // Desktop toggle should not control mobile navigation.
             if (isMobileView()) return;
 
             const isCurrentlyCollapsed =
@@ -2231,14 +2434,12 @@ if (checkoutBtn) {
 
         if (isMobileView()) {
 
-            // Mobile always uses the full-width slide-out sidebar.
             sidebar.classList.remove("collapsed");
 
             closeMobileSidebar();
 
         } else {
 
-            // Desktop restores the saved collapsed preference.
             applyDesktopSidebarState();
         }
     }
@@ -2407,11 +2608,40 @@ if (checkoutBtn) {
 
             // CONFIRM LOGOUT
 
-            confirmButton.addEventListener("click", function () {
+            confirmButton.addEventListener("click", async function () {
 
-                sessionStorage.clear();
+                try {
 
-                window.location.href = "./login.html";
+                    confirmButton.disabled = true;
+
+                    confirmButton.innerHTML = `
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Logging out...
+                    `;
+
+                    await apiClient.post("/auth/logout", {});
+
+                    sessionStorage.clear();
+
+                    window.location.href = "./login.html";
+
+                } catch (error) {
+
+                    console.error("Logout failed:", error);
+
+                    confirmButton.disabled = false;
+
+                    confirmButton.innerHTML = `
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Yes, Logout
+                    `;
+
+                    showMessage(
+                        "Logout Error",
+                        "Unable to log out. Please check your connection and try again.",
+                        "error"
+                    );
+                }
 
             });
 
@@ -2447,7 +2677,7 @@ if (checkoutBtn) {
 
     setupLogout();
 
-        // ==========================================
+    // ==========================================
     // 27. CURRENT DATE AND TIME
     // ==========================================
 

@@ -40,7 +40,7 @@
 
             <div class="brand-title">
                 <h2>CaféSense</h2>
-                <span class="role-badge">Owner Portal</span>
+                <span class="role-badge" id="role-badge">User Portal</span>
             </div>
 
             <!-- DESKTOP SIDEBAR TOGGLE -->
@@ -123,7 +123,7 @@
             </div>
 
             <!-- ANALYTICS & INSIGHTS -->
-            <div class="nav-section analytics-nav-section">
+            <div class="nav-section analytics-nav-section owner-manager-only">
 
                 <span class="nav-section-label">ANALYTICS & INSIGHTS</span>
 
@@ -203,7 +203,7 @@
             </div>
 
             <!-- REPORTS -->
-            <div class="nav-section">
+            <div class="nav-section owner-manager-only">
 
                 <span class="nav-section-label">REPORTS</span>
 
@@ -245,15 +245,17 @@
 
             <div class="user-profile-card">
 
-                <div class="user-avatar-placeholder">MS</div>
+                <div class="user-avatar-placeholder" id="display-user-avatar">U</div>
 
                 <div class="user-info">
 
                     <span id="display-user-name" class="user-name">
-                        Maria Santos
+                        Loading user...
                     </span>
 
-                    <span class="user-role">Lead Administrator</span>
+                    <span class="user-role" id="display-user-role">
+                        Loading role...
+                    </span>
 
                 </div>
 

@@ -1,14 +1,14 @@
+
 /* =========================================================
    CAFÉSENSE - SALES REPORTS
    reports.js
 ========================================================= */
-import { transactionApi } from '../api/transactionApi.js';
+import { apiClient } from '../api/apiClient.js';
 
 /* =========================
    1. STORAGE KEYS
 ========================= */
 
-const TRANSACTIONS_STORAGE_KEY = "cafeSenseTransactions";
 const SIDEBAR_STORAGE_KEY = "cafeSenseSidebarCollapsed";
 
 let transactions = [];
@@ -131,25 +131,17 @@ function closeSystemDialog(result = false) {
     }
 
     dialog.classList.remove("active");
-
     dialogCanCloseOnBackdrop = false;
-
     dialog.onclick = null;
 
     if (dialogEscapeHandler) {
-        document.removeEventListener(
-            "keydown",
-            dialogEscapeHandler
-        );
-
+        document.removeEventListener("keydown", dialogEscapeHandler);
         dialogEscapeHandler = null;
     }
 
     if (activeDialogResolver) {
         const resolve = activeDialogResolver;
-
         activeDialogResolver = null;
-
         resolve(result);
     }
 }
@@ -158,7 +150,6 @@ function closeSystemDialog(result = false) {
 function setupSystemDialogBehavior(dialog, allowBackdropClose = true) {
     dialogCanCloseOnBackdrop = allowBackdropClose;
 
-    // Close when clicking the backdrop.
     dialog.onclick = function (event) {
         if (
             event.target === dialog &&
@@ -168,7 +159,6 @@ function setupSystemDialogBehavior(dialog, allowBackdropClose = true) {
         }
     };
 
-    // Escape key and keyboard focus management.
     dialogEscapeHandler = function (event) {
         if (!dialog.classList.contains("active")) {
             return;
@@ -195,9 +185,7 @@ function setupSystemDialogBehavior(dialog, allowBackdropClose = true) {
             }
 
             const firstElement = focusableElements[0];
-
-            const lastElement =
-                focusableElements[focusableElements.length - 1];
+            const lastElement = focusableElements[focusableElements.length - 1];
 
             if (
                 event.shiftKey &&
@@ -205,9 +193,7 @@ function setupSystemDialogBehavior(dialog, allowBackdropClose = true) {
             ) {
                 event.preventDefault();
                 lastElement.focus();
-            }
-
-            else if (
+            } else if (
                 !event.shiftKey &&
                 document.activeElement === lastElement
             ) {
@@ -217,10 +203,7 @@ function setupSystemDialogBehavior(dialog, allowBackdropClose = true) {
         }
     };
 
-    document.addEventListener(
-        "keydown",
-        dialogEscapeHandler
-    );
+    document.addEventListener("keydown", dialogEscapeHandler);
 }
 
 
@@ -236,7 +219,6 @@ function showSystemDialog(message, title = "Notification") {
 
     titleElement.textContent = title;
     messageElement.textContent = message;
-
     iconElement.innerHTML = '<i class="fas fa-info-circle"></i>';
 
     actionsElement.innerHTML = `
@@ -246,7 +228,6 @@ function showSystemDialog(message, title = "Notification") {
     `;
 
     dialog.classList.add("active");
-
     setupSystemDialogBehavior(dialog, true);
 
     const okButton = actionsElement.querySelector("button");
@@ -271,7 +252,6 @@ function showSystemConfirm(message, title = "Confirmation") {
 
     titleElement.textContent = title;
     messageElement.textContent = message;
-
     iconElement.innerHTML = '<i class="fas fa-question-circle"></i>';
 
     actionsElement.innerHTML = `
@@ -295,13 +275,8 @@ function showSystemConfirm(message, title = "Confirmation") {
 
         setupSystemDialogBehavior(dialog, true);
 
-        const cancelButton = actionsElement.querySelector(
-            "#cafeDialogCancel"
-        );
-
-        const confirmButton = actionsElement.querySelector(
-            "#cafeDialogConfirm"
-        );
+        const cancelButton = actionsElement.querySelector("#cafeDialogCancel");
+        const confirmButton = actionsElement.querySelector("#cafeDialogConfirm");
 
         cancelButton.addEventListener("click", function () {
             closeSystemDialog(false);
@@ -346,7 +321,6 @@ function formatDate(date) {
 }
 
 
-// FORMAT TRANSACTION TIME
 function formatTime(date) {
     return date.toLocaleTimeString("en-PH", {
         hour: "2-digit",
@@ -356,7 +330,6 @@ function formatTime(date) {
 }
 
 
-// FORMAT MINUTES AS 12-HOUR TIME
 function formatMinutesAsTime(minutes) {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
@@ -397,30 +370,57 @@ function escapeHTML(value) {
 
 async function loadTransactions() {
     try {
-        const response = await transactionApi.getAll();
-        const databaseTransactions = response.data;
+        const response = await apiClient.get("/analytics");
+        const analyticsData = response.data;
 
-        if (!Array.isArray(databaseTransactions)) {
-            throw new Error("Invalid transaction data received from the API.");
+        const databaseTransactions = analyticsData?.transactions;
+        const databaseTransactionItems = analyticsData?.transactionItems;
+
+        if (
+            !Array.isArray(databaseTransactions) ||
+            !Array.isArray(databaseTransactionItems)
+        ) {
+            throw new Error(
+                "Invalid sales report data received from the server."
+            );
         }
 
-        transactions = databaseTransactions
-            .filter(transaction =>
-                transaction && typeof transaction === "object"
-            )
-            .map(transaction => ({
-                ...transaction,
-                items: Array.isArray(transaction.items)
-                    ? transaction.items.map(item => ({
-                        ...item,
-                        category:
-                            typeof item.category === "string" &&
-                            item.category.trim().toLowerCase() === "pastries"
-                                ? "Pastry / Baked Good"
-                                : item.category
-                    }))
-                    : []
-            }));
+        const transactionItemsMap = new Map();
+
+        databaseTransactionItems.forEach(item => {
+            const transactionId = String(item.transactionId);
+
+            if (!transactionItemsMap.has(transactionId)) {
+                transactionItemsMap.set(transactionId, []);
+            }
+
+            transactionItemsMap.get(transactionId).push({
+                productId: item.productId,
+                name: item.productName,
+
+                category:
+                    typeof item.category === "string" &&
+                    item.category.trim().toLowerCase() === "pastries"
+                        ? "Pastry / Baked Good"
+                        : item.category,
+
+                quantity: item.quantity,
+                price: item.unitPrice,
+                lineSubtotal: item.subtotal,
+                lineDiscount: item.discount,
+                lineTotal: item.total,
+                customerType: item.customerType
+            });
+        });
+
+        transactions = databaseTransactions.map(transaction => ({
+            ...transaction,
+            dateISO: transaction.date,
+            items:
+                transactionItemsMap.get(
+                    String(transaction.transactionId)
+                ) || []
+        }));
 
         return true;
 
@@ -432,6 +432,16 @@ async function loadTransactions() {
 
         transactions = [];
         filteredTransactions = [];
+
+        if (error.status === 401) {
+            window.location.replace("./login.html");
+            return false;
+        }
+
+        if (error.status === 403) {
+            window.location.replace("./dashboard.html");
+            return false;
+        }
 
         showSystemDialog(
             "Unable to retrieve sales records from the database. Please check your connection and try again.",
@@ -448,13 +458,11 @@ async function loadTransactions() {
 ========================= */
 
 function getTransactionDate(transaction) {
-
     if (transaction.dateISO) {
-        const isoValue = String(transaction.dateISO).trim();
+        const dateValue = String(transaction.dateISO).trim();
 
-        // Date-only ISO values are interpreted as local dates.
-        // This prevents timezone-related date shifting.
-        const dateOnlyMatch = isoValue.match(
+        // Date-only values are interpreted as local dates.
+        const dateOnlyMatch = dateValue.match(
             /^(\d{4})-(\d{2})-(\d{2})$/
         );
 
@@ -472,8 +480,45 @@ function getTransactionDate(transaction) {
             }
         }
 
-        // Full ISO date-time values are parsed normally.
-        const isoDate = new Date(isoValue);
+        // MySQL DATETIME values have no timezone indicator.
+        // Interpret them as local date and time.
+        const mysqlDateTimeMatch = dateValue.match(
+            /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?$/
+        );
+
+        if (mysqlDateTimeMatch) {
+            const [
+                ,
+                year,
+                month,
+                day,
+                hours,
+                minutes,
+                seconds,
+                fractionalSeconds
+            ] = mysqlDateTimeMatch;
+
+            const milliseconds = fractionalSeconds
+                ? Number(`0.${fractionalSeconds}`) * 1000
+                : 0;
+
+            const localDate = new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hours),
+                Number(minutes),
+                Number(seconds),
+                Math.floor(milliseconds)
+            );
+
+            if (!Number.isNaN(localDate.getTime())) {
+                return localDate;
+            }
+        }
+
+        // Full ISO date-time values with timezone information.
+        const isoDate = new Date(dateValue);
 
         if (!Number.isNaN(isoDate.getTime())) {
             return isoDate;
@@ -503,7 +548,14 @@ function getTransactionDate(transaction) {
    7. TRANSACTION TOTALS
 ========================= */
 
+// Use the authoritative transaction-level values from the API.
+// These values are used for overall sales summaries and records.
+
 function getTransactionGross(transaction) {
+    if (transaction.subtotal !== undefined && transaction.subtotal !== null) {
+        return Number(transaction.subtotal) || 0;
+    }
+
     if (Array.isArray(transaction.items)) {
         return transaction.items.reduce((sum, item) => {
             const lineSubtotal = Number(item.lineSubtotal);
@@ -519,29 +571,33 @@ function getTransactionGross(transaction) {
         }, 0);
     }
 
-    return Number(transaction.subtotal) || 0;
+    return 0;
 }
 
 
 function getTransactionDiscount(transaction) {
+    if (transaction.discount !== undefined && transaction.discount !== null) {
+        return Number(transaction.discount) || 0;
+    }
+
     if (Array.isArray(transaction.items)) {
         return transaction.items.reduce((sum, item) => {
             return sum + (Number(item.lineDiscount) || 0);
         }, 0);
     }
 
-    return Number(transaction.discount) || 0;
+    return 0;
 }
 
 
 function getTransactionNet(transaction) {
-    if (transaction.total !== undefined) {
+    if (transaction.total !== undefined && transaction.total !== null) {
         return Number(transaction.total) || 0;
     }
 
     if (Array.isArray(transaction.items)) {
         return transaction.items.reduce((sum, item) => {
-            if (item.lineTotal !== undefined) {
+            if (item.lineTotal !== undefined && item.lineTotal !== null) {
                 return sum + (Number(item.lineTotal) || 0);
             }
 
@@ -552,10 +608,8 @@ function getTransactionNet(transaction) {
         }, 0);
     }
 
-    return (
-        getTransactionGross(transaction) -
-        getTransactionDiscount(transaction)
-    );
+    return getTransactionGross(transaction) -
+        getTransactionDiscount(transaction);
 }
 
 
@@ -583,7 +637,7 @@ function getItemDiscount(item) {
 
 
 function getItemNet(item) {
-    if (item.lineTotal !== undefined) {
+    if (item.lineTotal !== undefined && item.lineTotal !== null) {
         return Number(item.lineTotal) || 0;
     }
 
@@ -615,9 +669,9 @@ function setDefaultDateFilters() {
 }
 
 
-/* =========================================================
+/* =========================
    DISPLAY CURRENT DATE AND TIME
-========================================================= */
+========================= */
 
 function updateCurrentDateTime() {
     const now = new Date();
@@ -743,7 +797,6 @@ function updateSalesSummary() {
     totalCustomersValue.textContent = formatNumber(totalCustomers);
 }
 
-
 /* =========================
    12. GROUP SALES BY INTERVAL
 ========================= */
@@ -824,9 +877,6 @@ function groupSalesByPeriod() {
                 grossSales: 0,
                 discounts: 0,
                 netSales: 0,
-
-                // Track the earliest and latest transaction
-                // time of day within this reporting period.
                 earliestTransactionMinute: Infinity,
                 latestTransactionMinute: -Infinity
             };
@@ -837,21 +887,19 @@ function groupSalesByPeriod() {
         groupedSales[key].customers +=
             Number(transaction.customerCount) || 0;
 
+        // Use transaction-level totals from the backend.
         groupedSales[key].grossSales += getTransactionGross(transaction);
         groupedSales[key].discounts += getTransactionDiscount(transaction);
         groupedSales[key].netSales += getTransactionNet(transaction);
 
-        // GET TRANSACTION TIME IN MINUTES AFTER MIDNIGHT
         const transactionMinute =
             (date.getHours() * 60) + date.getMinutes();
 
-        // UPDATE EARLIEST TRANSACTION TIME
         groupedSales[key].earliestTransactionMinute = Math.min(
             groupedSales[key].earliestTransactionMinute,
             transactionMinute
         );
 
-        // UPDATE LATEST TRANSACTION TIME
         groupedSales[key].latestTransactionMinute = Math.max(
             groupedSales[key].latestTransactionMinute,
             transactionMinute
@@ -867,7 +915,6 @@ function groupSalesByPeriod() {
 // Shared data source for the Sales Summary table and CSV export.
 function getSalesSummaryRecords() {
     return groupSalesByPeriod().map(item => {
-
         const hasTransactionTimes =
             Number.isFinite(item.earliestTransactionMinute) &&
             Number.isFinite(item.latestTransactionMinute);
@@ -900,7 +947,9 @@ function updateSalesChart() {
 
     const hasData = groupedSales.length > 0;
 
-    salesChartEmpty.hidden = hasData;
+    if (salesChartEmpty) {
+        salesChartEmpty.hidden = hasData;
+    }
 
     salesReportChartCanvas.parentElement.style.display = hasData
         ? "block"
@@ -1156,7 +1205,8 @@ function getCustomerSalesData() {
     const customerMap = new Map();
 
     filteredTransactions.forEach((transaction, index) => {
-        const transactionKey = transaction.id || `transaction-${index}`;
+        const transactionKey =
+            transaction.transactionId || `transaction-${index}`;
 
         const breakdown = getTransactionCustomerTypeBreakdown(transaction);
 
@@ -1313,7 +1363,6 @@ function downloadCSV(headers, rows, filename) {
     link.click();
     document.body.removeChild(link);
 
-    // Allow the browser time to process the download.
     window.setTimeout(function () {
         URL.revokeObjectURL(url);
     }, 1000);
@@ -1324,14 +1373,11 @@ function getExportDateSuffix() {
     return getLocalDateString(new Date());
 }
 
-
 /* =========================
    20. EXPORT SALES SUMMARY CSV
 ========================= */
 
 async function exportSalesSummaryCSV() {
-
-    // Uses the exact same records displayed in the Sales Summary table.
     const groupedSales = getSalesSummaryRecords();
 
     if (groupedSales.length === 0) {
@@ -1350,7 +1396,6 @@ async function exportSalesSummaryCSV() {
 
     if (!confirmed) return;
 
-    // Matches the Sales Summary Records table column order.
     const headers = [
         "Period",
         "Time Range",
@@ -1674,17 +1719,12 @@ function setupSidebar() {
 
     applySidebarState();
 
-
-    /* DESKTOP SIDEBAR TOGGLE */
-
+    // DESKTOP SIDEBAR TOGGLE
     if (sidebarToggle) {
         sidebarToggle.addEventListener("click", function () {
-
             if (isMobileView()) return;
 
-            const isCollapsed = sidebar.classList.toggle(
-                "collapsed"
-            );
+            const isCollapsed = sidebar.classList.toggle("collapsed");
 
             localStorage.setItem(
                 SIDEBAR_STORAGE_KEY,
@@ -1708,17 +1748,12 @@ function setupSidebar() {
         });
     }
 
-
-    /* MOBILE SIDEBAR TOGGLE */
-
+    // MOBILE SIDEBAR TOGGLE
     if (mobileSidebarToggle) {
         mobileSidebarToggle.addEventListener("click", function () {
-
             if (!isMobileView()) return;
 
-            const isOpen = sidebar.classList.contains(
-                "mobile-open"
-            );
+            const isOpen = sidebar.classList.contains("mobile-open");
 
             if (isOpen) {
                 closeMobileSidebar();
@@ -1728,24 +1763,18 @@ function setupSidebar() {
         });
     }
 
-
-    /* SIDEBAR CLOSE BUTTON */
-
+    // SIDEBAR CLOSE BUTTON
     if (sidebarClose) {
         sidebarClose.addEventListener("click", function () {
-
             if (isMobileView()) {
                 closeMobileSidebar();
             }
         });
     }
 
-
-    /* ANALYTICS DROPDOWN - MATCHES DASHBOARD */
-
+    // ANALYTICS DROPDOWN
     if (analyticsDropdownToggle && analyticsNavList) {
         analyticsDropdownToggle.addEventListener("click", function () {
-
             const isCurrentlyCollapsed =
                 analyticsNavList.classList.contains("collapsed");
 
@@ -1758,11 +1787,8 @@ function setupSidebar() {
         });
     }
 
-
-    /* CLOSE SIDEBAR WHEN CLICKING OUTSIDE */
-
+    // CLOSE SIDEBAR WHEN CLICKING OUTSIDE
     document.addEventListener("click", function (event) {
-
         if (
             isMobileView() &&
             sidebar.classList.contains("mobile-open") &&
@@ -1774,32 +1800,23 @@ function setupSidebar() {
         }
     });
 
-
-    /* ESCAPE KEY */
-
+    // ESCAPE KEY
     document.addEventListener("keydown", function (event) {
-
         if (event.key === "Escape") {
             closeMobileSidebar();
         }
     });
 
-
-    /* CLOSE AFTER SELECTING A NAVIGATION LINK */
-
+    // CLOSE AFTER SELECTING A NAVIGATION LINK
     document.querySelectorAll(".sidebar-nav a").forEach(link => {
-
         link.addEventListener("click", function () {
-
             if (isMobileView()) {
                 closeMobileSidebar();
             }
         });
     });
 
-
-    /* RESPONSIVE SCREEN SIZE */
-
+    // RESPONSIVE SCREEN SIZE
     window.addEventListener("resize", applySidebarState);
 }
 
@@ -1824,7 +1841,6 @@ function setupLogout() {
         const modalToClose = logoutModal;
 
         modalToClose.classList.remove("show");
-
         document.body.classList.remove("logout-modal-open");
 
         document.removeEventListener(
@@ -1871,9 +1887,7 @@ function setupLogout() {
             }
 
             const firstElement = focusableElements[0];
-
-            const lastElement =
-                focusableElements[focusableElements.length - 1];
+            const lastElement = focusableElements[focusableElements.length - 1];
 
             if (
                 event.shiftKey &&
@@ -1881,9 +1895,7 @@ function setupLogout() {
             ) {
                 event.preventDefault();
                 lastElement.focus();
-            }
-
-            else if (
+            } else if (
                 !event.shiftKey &&
                 document.activeElement === lastElement
             ) {
@@ -1900,7 +1912,6 @@ function setupLogout() {
         }
 
         logoutModal = document.createElement("div");
-
         logoutModal.className = "logout-modal-overlay";
 
         logoutModal.innerHTML = `
@@ -1934,9 +1945,7 @@ function setupLogout() {
                         type="button"
                         class="logout-modal-cancel"
                         id="logout-modal-cancel">
-
                         Cancel
-
                     </button>
 
                     <button
@@ -1945,7 +1954,6 @@ function setupLogout() {
                         id="logout-modal-confirm">
 
                         <i class="fa-solid fa-right-from-bracket"></i>
-
                         Yes, Logout
 
                     </button>
@@ -1956,7 +1964,6 @@ function setupLogout() {
         `;
 
         document.body.appendChild(logoutModal);
-
         document.body.classList.add("logout-modal-open");
 
         const cancelButton = logoutModal.querySelector(
@@ -1972,13 +1979,36 @@ function setupLogout() {
         });
 
         // CONFIRM LOGOUT
+        confirmButton.addEventListener("click", async function () {
+            try {
+                confirmButton.disabled = true;
 
-        confirmButton.addEventListener("click", function () {
+                confirmButton.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Logging out...
+                `;
 
-            sessionStorage.clear();
+                await apiClient.post("/auth/logout", {});
 
-            window.location.href = "./login.html";
+                sessionStorage.clear();
 
+                window.location.href = "./login.html";
+
+            } catch (error) {
+                console.error("Logout failed:", error);
+
+                confirmButton.disabled = false;
+
+                confirmButton.innerHTML = `
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Yes, Logout
+                `;
+
+                showSystemDialog(
+                    "Unable to log out. Please check your connection and try again.",
+                    "Logout Error"
+                );
+            }
         });
 
         logoutModal.addEventListener("click", function (event) {
@@ -2047,43 +2077,138 @@ function setupReportEvents() {
 
 
 /* =========================
+   USER PROFILE
+========================= */
+
+function updateUserProfile(user) {
+    const nameElement = document.getElementById("display-user-name");
+    const roleElement = document.getElementById("display-user-role");
+    const avatarElement = document.getElementById("display-user-avatar");
+    const roleBadge = document.getElementById("role-badge");
+
+    const fullName = user.fullName || user.username || "User";
+    const role = user.role || "Staff";
+
+    if (nameElement) {
+        nameElement.textContent = fullName;
+    }
+
+    if (roleElement) {
+        roleElement.textContent = role;
+    }
+
+    if (avatarElement) {
+        avatarElement.textContent = fullName
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(name => name.charAt(0).toUpperCase())
+            .join("");
+    }
+
+    if (roleBadge) {
+        roleBadge.textContent = `${role} Portal`;
+    }
+
+    // Hide Owner-only navigation for Managers.
+    if (role !== "Owner") {
+        document.querySelectorAll(".owner-only").forEach(element => {
+            element.style.display = "none";
+        });
+    }
+}
+
+
+/* =========================
    28. INITIALIZE PAGE
 ========================= */
 
+let reportRefreshInProgress = false;
+let reportsPageInitialized = false;
+
+
 async function initializeReportsPage() {
-    updateCurrentDateTime();
+    try {
+        // 1. Verify the current login session.
+        const authResponse = await apiClient.get("/auth/me");
 
-    setDefaultDateFilters();
+        if (
+            !authResponse.success ||
+            !authResponse.data?.user
+        ) {
+            window.location.href = "./login.html";
+            return;
+        }
 
-    setupReportEvents();
-    setupSidebar();
-    setupLogout();
+        const currentUser = authResponse.data.user;
+        const userRole = currentUser.role;
 
-    await loadTransactions();
+        updateUserProfile(currentUser);
 
-    generateReport();
+        // 2. Allow only Owner and Manager.
+        if (!["Owner", "Manager"].includes(userRole)) {
+            window.location.href = "./dashboard.html";
+            return;
+        }
+
+        // 3. Initialize the Reports page.
+        updateCurrentDateTime();
+
+        setDefaultDateFilters();
+
+        setupReportEvents();
+        setupSidebar();
+        setupLogout();
+
+        const loaded = await loadTransactions();
+
+        if (!loaded) {
+            return;
+        }
+
+        generateReport();
+
+        reportsPageInitialized = true;
+
+    } catch (error) {
+        console.error(
+            "Unable to initialize Sales Reports:",
+            error
+        );
+
+        if (
+            error.status === 401 ||
+            error.status === 403
+        ) {
+            window.location.href = "./login.html";
+            return;
+        }
+
+        showSystemDialog(
+            "Unable to verify your account. Please refresh the page or try again.",
+            "Authentication Error"
+        );
+    }
 }
-
-initializeReportsPage();
 
 
 /* =========================
    29. REFRESH WHEN DATA CHANGES
 ========================= */
 
-let reportRefreshInProgress = false;
-
 async function refreshReportData() {
-
-    if (reportRefreshInProgress) {
+    if (!reportsPageInitialized || reportRefreshInProgress) {
         return;
     }
 
     reportRefreshInProgress = true;
 
     try {
+        const loaded = await loadTransactions();
 
-        await loadTransactions();
+        if (!loaded) {
+            return;
+        }
 
         const startValue = reportStartDate.value;
         const endValue = reportEndDate.value;
@@ -2098,6 +2223,10 @@ async function refreshReportData() {
         reportRefreshInProgress = false;
     }
 }
+
+
+// Initialize the page.
+initializeReportsPage();
 
 
 // Refresh when returning to the Reports page.

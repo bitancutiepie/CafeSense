@@ -1,27 +1,57 @@
+
+import { apiClient } from "../api/apiClient.js";
+
 "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
     // ==========================================
-    // 1. STORAGE KEYS AND CURRENT USER
+    // 1. CURRENT USER AND AUTHENTICATION
     // ==========================================
 
-    const USER_STORAGE_KEY = "cafesenseUsers";
-    const SESSION_STORAGE_KEY = "cafesense-current-user";
     const SIDEBAR_STORAGE_KEY = "cafeSenseSidebarCollapsed";
 
     let currentUser;
+    let users = [];
 
     try {
-        currentUser = JSON.parse(
-            sessionStorage.getItem(SESSION_STORAGE_KEY)
-        );
-    } catch (error) {
-        currentUser = null;
-    }
+        const response = await apiClient.get("/auth/me");
 
-    if (!currentUser) {
-        window.location.replace("login.html");
+        if (!response.success || !response.data?.user) {
+            throw new Error("Unable to verify your CaféSense session.");
+        }
+
+        currentUser = response.data.user;
+
+    } catch (error) {
+        console.error("User Management authentication failed:", error);
+
+        if ([401, 403, 404].includes(error.status)) {
+            window.location.replace("login.html");
+            return;
+        }
+
+        document.body.innerHTML = `
+            <main style="
+                max-width: 600px;
+                margin: 80px auto;
+                padding: 24px;
+                text-align: center;
+                font-family: Arial, sans-serif;
+            ">
+                <h2>Unable to Verify Your Session</h2>
+                <p>
+                    CaféSense could not connect to the server.
+                    Please make sure the backend is running,
+                    then try again.
+                </p>
+                <button onclick="window.location.reload()">Retry</button>
+                <button onclick="window.location.replace('login.html')">
+                    Back to Login
+                </button>
+            </main>
+        `;
+
         return;
     }
 
@@ -32,16 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentRole !== "owner") {
         window.location.replace("dashboard.html");
         return;
-    }
-
-    let users = [];
-
-    try {
-        users = JSON.parse(
-            localStorage.getItem(USER_STORAGE_KEY)
-        ) || [];
-    } catch (error) {
-        users = [];
     }
 
     // ==========================================
@@ -58,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const userSearch = document.getElementById("userSearch");
     const roleFilter = document.getElementById("roleFilter");
+    const accountStatusFilter = document.getElementById("accountStatusFilter");
 
     const addUserBtn = document.getElementById("addUserBtn");
 
@@ -78,11 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeModalBtn = document.getElementById("closeModalBtn");
     const cancelUserBtn = document.getElementById("cancelUserBtn");
 
-    // Date and Time
     const currentDateElement = document.getElementById("current-date");
     const currentTimeElement = document.getElementById("current-time");
 
-    // Sidebar
     const sidebar = document.getElementById("sidebar");
     const sidebarToggle = document.getElementById("sidebarToggle");
     const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
@@ -95,11 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const logoutBtn = document.getElementById("logout-btn");
 
-    // Analytics dropdown
     const analyticsToggle = document.getElementById("analyticsDropdownToggle");
     const analyticsNavList = document.getElementById("analyticsNavList");
 
-    // Custom CRUD dialog
     const dialogOverlay = document.getElementById("dialogOverlay");
     const dialogIcon = document.getElementById("dialogIcon");
     const dialogTitle = document.getElementById("dialogTitle");
@@ -107,18 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dialogActions = document.getElementById("dialogActions");
 
     // ==========================================
-    // 3. STORAGE FUNCTIONS
-    // ==========================================
-
-    function saveUsers() {
-        localStorage.setItem(
-            USER_STORAGE_KEY,
-            JSON.stringify(users)
-        );
-    }
-
-    // ==========================================
-    // 4. HELPER FUNCTIONS
+    // 3. HELPER FUNCTIONS
     // ==========================================
 
     function escapeHTML(value) {
@@ -156,16 +162,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return "Staff";
     }
 
-    function getCurrentUserIndex() {
-        return users.findIndex(user =>
-            user.username?.toLowerCase() ===
-            currentUser.username?.toLowerCase()
-        );
+    function normalizeStatus(status) {
+        return String(status || "Active").trim().toLowerCase() === "inactive"
+            ? "Inactive"
+            : "Active";
     }
 
     function isValidEmail(email) {
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailPattern.test(email);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function getErrorMessage(error) {
+        if (Array.isArray(error.data?.details)) {
+            return error.data.details.join("\n");
+        }
+
+        return error.message || "An unexpected error occurred.";
     }
 
     function closeUserModal() {
@@ -186,15 +198,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 5. DATE AND TIME DISPLAY
+    // 4. API - LOAD USERS
+    // ==========================================
+
+    async function loadUsers() {
+        const response = await apiClient.get("/users");
+
+        if (!response.success || !Array.isArray(response.data)) {
+            throw new Error("Unable to retrieve user records.");
+        }
+
+        // Keep both Active and Inactive accounts in memory.
+        users = response.data.map(user => ({
+            id: user.id,
+            fullName: user.fullName,
+            username: user.username,
+            email: user.email,
+            role: normalizeRole(user.role),
+            accountStatus: normalizeStatus(user.accountStatus)
+        }));
+    }
+
+    // ==========================================
+    // 5. DATE AND TIME
     // ==========================================
 
     function updateCurrentDateTime() {
-
         const now = new Date();
 
         if (currentDateElement) {
-
             currentDateElement.textContent =
                 now.toLocaleDateString("en-PH", {
                     weekday: "long",
@@ -202,18 +234,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     month: "long",
                     day: "numeric"
                 }).toUpperCase();
-
         }
 
         if (currentTimeElement) {
-
             currentTimeElement.textContent =
                 now.toLocaleTimeString("en-PH", {
                     hour: "numeric",
                     minute: "2-digit",
                     hour12: true
                 });
-
         }
     }
 
@@ -228,9 +257,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showDialog(title, message, type = "info", onConfirm = null) {
-
-        if (!dialogOverlay || !dialogIcon || !dialogTitle ||
-            !dialogMessage || !dialogActions) {
+        if (
+            !dialogOverlay ||
+            !dialogIcon ||
+            !dialogTitle ||
+            !dialogMessage ||
+            !dialogActions
+        ) {
             console.error("Custom dialog elements are missing.");
             return;
         }
@@ -253,31 +286,27 @@ document.addEventListener("DOMContentLoaded", () => {
         dialogActions.innerHTML = "";
 
         if (onConfirm) {
-
             const cancelBtn = document.createElement("button");
-
             cancelBtn.type = "button";
             cancelBtn.textContent = "Cancel";
             cancelBtn.className = "secondary-btn";
             cancelBtn.addEventListener("click", closeDialog);
 
             const confirmBtn = document.createElement("button");
-
             confirmBtn.type = "button";
             confirmBtn.textContent = "Confirm";
             confirmBtn.className = "primary-btn";
 
-            confirmBtn.addEventListener("click", () => {
+            confirmBtn.addEventListener("click", async () => {
+                confirmBtn.disabled = true;
                 closeDialog();
-                onConfirm();
+                await onConfirm();
             });
 
             dialogActions.append(cancelBtn, confirmBtn);
 
         } else {
-
             const okBtn = document.createElement("button");
-
             okBtn.type = "button";
             okBtn.textContent = "Okay";
             okBtn.className = "primary-btn";
@@ -302,8 +331,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function updateSidebarProfile() {
-
         const displayName =
+            currentUser.fullName ||
             currentUser.name ||
             currentUser.fullname ||
             currentUser.username ||
@@ -333,20 +362,24 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function updateSummary() {
+        // Summary cards continue to count Active accounts only.
+        const activeUsers = users.filter(user =>
+            user.accountStatus === "Active"
+        );
 
-        const owners = users.filter(user =>
+        const owners = activeUsers.filter(user =>
             normalizeRole(user.role) === "Owner"
         ).length;
 
-        const managers = users.filter(user =>
+        const managers = activeUsers.filter(user =>
             normalizeRole(user.role) === "Manager"
         ).length;
 
-        const staff = users.filter(user =>
+        const staff = activeUsers.filter(user =>
             normalizeRole(user.role) === "Staff"
         ).length;
 
-        if (totalUsers) totalUsers.textContent = users.length;
+        if (totalUsers) totalUsers.textContent = activeUsers.length;
         if (ownerCount) ownerCount.textContent = owners;
         if (managerCount) managerCount.textContent = managers;
         if (staffCount) staffCount.textContent = staff;
@@ -357,7 +390,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function displayUsers() {
-
         if (!usersTableBody) return;
 
         usersTableBody.innerHTML = "";
@@ -370,9 +402,12 @@ document.addEventListener("DOMContentLoaded", () => {
             ? roleFilter.value
             : "All";
 
-        const filteredUsers = users.filter(user => {
+        const selectedStatus = accountStatusFilter
+            ? accountStatusFilter.value
+            : "Active";
 
-            const name = String(user.fullname || "").toLowerCase();
+        const filteredUsers = users.filter(user => {
+            const name = String(user.fullName || "").toLowerCase();
             const username = String(user.username || "").toLowerCase();
             const email = String(user.email || "").toLowerCase();
 
@@ -385,7 +420,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedRole === "All" ||
                 normalizeRole(user.role) === selectedRole;
 
-            return matchesSearch && matchesRole;
+            const matchesStatus =
+                selectedStatus === "All" ||
+                user.accountStatus === selectedStatus;
+
+            return matchesSearch && matchesRole && matchesStatus;
         });
 
         if (filteredUsers.length === 0) {
@@ -396,13 +435,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (emptyState) emptyState.hidden = true;
 
         filteredUsers.forEach(user => {
-
             const originalIndex = users.indexOf(user);
 
             const isCurrentUser =
-                user.username?.toLowerCase() ===
-                currentUser.username?.toLowerCase();
+                Number(user.id) === Number(currentUser.id);
 
+            const isActive = user.accountStatus === "Active";
             const role = normalizeRole(user.role);
 
             const roleClass = {
@@ -411,17 +449,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 Staff: "role-staff"
             }[role] || "role-staff";
 
+            const statusClass = isActive
+                ? "account-status-active"
+                : "account-status-inactive";
+
             const row = document.createElement("tr");
+
+            const actions = isActive
+                ? `
+                    <button
+                        type="button"
+                        class="action-btn edit-btn"
+                        data-index="${originalIndex}"
+                        title="Edit User"
+                        aria-label="Edit User">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="action-btn delete-btn"
+                        data-index="${originalIndex}"
+                        title="Deactivate User"
+                        aria-label="Deactivate User"
+                        ${isCurrentUser ? "disabled" : ""}>
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `
+                : `
+                    <button
+                        type="button"
+                        class="action-btn reactivate-btn"
+                        data-index="${originalIndex}"
+                        title="Reactivate User"
+                        aria-label="Reactivate User">
+                        <i class="fa-solid fa-user-check"></i>
+                    </button>
+                `;
 
             row.innerHTML = `
                 <td>
                     <div class="user-cell">
                         <div class="user-cell-avatar">
-                            ${escapeHTML(getInitials(user.fullname))}
+                            ${escapeHTML(getInitials(user.fullName))}
                         </div>
 
                         <div class="user-cell-info">
-                            <strong>${escapeHTML(user.fullname)}</strong>
+                            <strong>${escapeHTML(user.fullName)}</strong>
                             <small>@${escapeHTML(user.username)}</small>
                         </div>
                     </div>
@@ -436,25 +510,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
 
                 <td>
-                    <div class="action-buttons">
-                        <button
-                            type="button"
-                            class="action-btn edit-btn"
-                            data-index="${originalIndex}"
-                            title="Edit User"
-                            aria-label="Edit User">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
+                    <span class="account-status-badge ${statusClass}">
+                        ${escapeHTML(user.accountStatus)}
+                    </span>
+                </td>
 
-                        <button
-                            type="button"
-                            class="action-btn delete-btn"
-                            data-index="${originalIndex}"
-                            title="Delete User"
-                            aria-label="Delete User"
-                            ${isCurrentUser ? "disabled" : ""}>
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                <td>
+                    <div class="action-buttons">
+                        ${actions}
                     </div>
                 </td>
             `;
@@ -468,9 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     if (addUserBtn) {
-
         addUserBtn.addEventListener("click", () => {
-
             userForm.reset();
             editUserIndex.value = "";
 
@@ -478,7 +539,6 @@ document.addEventListener("DOMContentLoaded", () => {
             confirmPasswordInput.required = true;
 
             modalTitle.textContent = "Add New User";
-
             modalDescription.textContent =
                 "Create a new CaféSense account.";
 
@@ -487,28 +547,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 11. EDIT AND DELETE USERS
+    // 11. EDIT, DEACTIVATE AND REACTIVATE USERS
     // ==========================================
 
     if (usersTableBody) {
-
         usersTableBody.addEventListener("click", event => {
 
             const editButton = event.target.closest(".edit-btn");
             const deleteButton = event.target.closest(".delete-btn");
+            const reactivateButton = event.target.closest(".reactivate-btn");
 
             // EDIT USER
             if (editButton) {
-
                 const index = Number(editButton.dataset.index);
                 const user = users[index];
 
-                if (!user) return;
+                if (!user || user.accountStatus !== "Active") return;
 
                 userForm.reset();
-                editUserIndex.value = index;
+                editUserIndex.value = String(user.id);
 
-                fullNameInput.value = user.fullname || "";
+                fullNameInput.value = user.fullName || "";
                 usernameInput.value = user.username || "";
                 emailInput.value = user.email || "";
                 userRoleInput.value = normalizeRole(user.role);
@@ -520,7 +579,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 confirmPasswordInput.required = false;
 
                 modalTitle.textContent = "Edit User";
-
                 modalDescription.textContent =
                     "Update the selected user's information.";
 
@@ -528,30 +586,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // DELETE USER
+            // DEACTIVATE USER
             if (deleteButton && !deleteButton.disabled) {
-
                 const index = Number(deleteButton.dataset.index);
                 const user = users[index];
 
-                if (!user) return;
+                if (!user || user.accountStatus !== "Active") return;
 
-                const isCurrentUser =
-                    user.username?.toLowerCase() ===
-                    currentUser.username?.toLowerCase();
-
-                if (isCurrentUser) {
-
+                if (Number(user.id) === Number(currentUser.id)) {
                     showDialog(
                         "Action Not Allowed",
-                        "You cannot delete your own account.",
+                        "You cannot deactivate your own account.",
                         "warning"
                     );
-
                     return;
                 }
 
                 const ownerCountNow = users.filter(account =>
+                    account.accountStatus === "Active" &&
                     normalizeRole(account.role) === "Owner"
                 ).length;
 
@@ -559,33 +611,94 @@ document.addEventListener("DOMContentLoaded", () => {
                     normalizeRole(user.role) === "Owner" &&
                     ownerCountNow <= 1
                 ) {
-
                     showDialog(
                         "Action Not Allowed",
-                        "You cannot delete the last Owner account.",
+                        "You cannot deactivate the last active Owner account.",
                         "warning"
                     );
-
                     return;
                 }
 
                 showDialog(
-                    "Delete User?",
-                    `Are you sure you want to permanently delete ${user.fullname}?`,
+                    "Deactivate User?",
+                    `Are you sure you want to deactivate ${user.fullName}'s account?`,
                     "question",
-                    () => {
+                    async () => {
+                        try {
+                            await apiClient.delete(`/users/${user.id}`);
 
-                        users.splice(index, 1);
+                            user.accountStatus = "Inactive";
 
-                        saveUsers();
-                        updateSummary();
-                        displayUsers();
+                            updateSummary();
+                            displayUsers();
 
-                        showDialog(
-                            "User Deleted",
-                            "The user account has been successfully deleted.",
-                            "success"
-                        );
+                            showDialog(
+                                "User Deactivated",
+                                "The user account has been successfully deactivated.",
+                                "success"
+                            );
+
+                        } catch (error) {
+                            console.error("User deactivation failed:", error);
+
+                            showDialog(
+                                "Unable to Deactivate User",
+                                getErrorMessage(error),
+                                "error"
+                            );
+                        }
+                    }
+                );
+
+                return;
+            }
+
+            // REACTIVATE USER
+            if (reactivateButton) {
+                const index = Number(reactivateButton.dataset.index);
+                const user = users[index];
+
+                if (!user || user.accountStatus !== "Inactive") return;
+
+                showDialog(
+                    "Reactivate User?",
+                    `Are you sure you want to reactivate ${user.fullName}'s account? The user will be able to log in again using their existing password.`,
+                    "question",
+                    async () => {
+                        try {
+                            const response = await apiClient.post(
+                                `/users/${user.id}/reactivate`,
+                                {}
+                            );
+
+                            if (!response.success || !response.data) {
+                                throw new Error(
+                                    "Unable to reactivate the user account."
+                                );
+                            }
+
+                            user.accountStatus = normalizeStatus(
+                                response.data.accountStatus
+                            );
+
+                            updateSummary();
+                            displayUsers();
+
+                            showDialog(
+                                "User Reactivated",
+                                `${user.fullName}'s account has been successfully reactivated.`,
+                                "success"
+                            );
+
+                        } catch (error) {
+                            console.error("User reactivation failed:", error);
+
+                            showDialog(
+                                "Unable to Reactivate User",
+                                getErrorMessage(error),
+                                "error"
+                            );
+                        }
                     }
                 );
             }
@@ -597,12 +710,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     if (userForm) {
-
-        userForm.addEventListener("submit", event => {
-
+        userForm.addEventListener("submit", async event => {
             event.preventDefault();
 
-            const fullname = fullNameInput.value.trim();
+            const fullName = fullNameInput.value.trim();
             const username = usernameInput.value.trim();
             const email = emailInput.value.trim().toLowerCase();
             const role = userRoleInput.value;
@@ -610,118 +721,106 @@ document.addEventListener("DOMContentLoaded", () => {
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
 
-            const editIndex = editUserIndex.value;
-            const isEditing = editIndex !== "";
+            const editId = editUserIndex.value;
+            const isEditing = editId !== "";
 
-            if (!fullname || !username || !email || !role) {
-
+            if (!fullName || !username || !email || !role) {
                 showDialog(
                     "Missing Information",
                     "Please complete all required fields.",
                     "warning"
                 );
-
                 return;
             }
 
             if (!isValidEmail(email)) {
-
                 showDialog(
                     "Invalid Email",
                     "Please enter a valid email address.",
                     "warning"
                 );
-
                 return;
             }
 
             if (!isEditing && !password) {
-
                 showDialog(
                     "Missing Password",
                     "Please enter a password for the new user.",
                     "warning"
                 );
-
                 return;
             }
 
             if (password && password.length < 8) {
-
                 showDialog(
                     "Weak Password",
                     "Password must contain at least 8 characters.",
                     "warning"
                 );
-
                 return;
             }
 
             if (password !== confirmPassword) {
-
                 showDialog(
                     "Password Mismatch",
                     "Password and confirm password do not match.",
                     "warning"
                 );
-
-                return;
-            }
-
-            const duplicateUsername = users.some((user, index) =>
-                index !== Number(editIndex) &&
-                user.username?.toLowerCase() === username.toLowerCase()
-            );
-
-            if (duplicateUsername) {
-
-                showDialog(
-                    "Username Already Exists",
-                    "Please choose another username.",
-                    "warning"
-                );
-
-                return;
-            }
-
-            const duplicateEmail = users.some((user, index) =>
-                index !== Number(editIndex) &&
-                user.email?.toLowerCase() === email
-            );
-
-            if (duplicateEmail) {
-
-                showDialog(
-                    "Email Already Exists",
-                    "This email address is already registered.",
-                    "warning"
-                );
-
                 return;
             }
 
             const oldUser = isEditing
-                ? users[Number(editIndex)]
+                ? users.find(user => Number(user.id) === Number(editId))
                 : null;
 
-            if (isEditing && !oldUser) return;
+            if (isEditing && (!oldUser || oldUser.accountStatus !== "Active")) {
+                showDialog(
+                    "User Not Found",
+                    "The selected active user could not be found.",
+                    "error"
+                );
+                return;
+            }
+
+            // Check duplicates across both Active and Inactive accounts.
+            const duplicateUsername = users.some(user =>
+                Number(user.id) !== Number(editId) &&
+                user.username?.toLowerCase() === username.toLowerCase()
+            );
+
+            if (duplicateUsername) {
+                showDialog(
+                    "Username Already Exists",
+                    "This username is already registered, including by an inactive account.",
+                    "warning"
+                );
+                return;
+            }
+
+            const duplicateEmail = users.some(user =>
+                Number(user.id) !== Number(editId) &&
+                user.email?.toLowerCase() === email
+            );
+
+            if (duplicateEmail) {
+                showDialog(
+                    "Email Already Exists",
+                    "This email address is already registered, including by an inactive account.",
+                    "warning"
+                );
+                return;
+            }
 
             const isEditingCurrentUser =
                 isEditing &&
-                oldUser.username?.toLowerCase() ===
-                currentUser.username?.toLowerCase();
+                Number(oldUser.id) === Number(currentUser.id);
 
-            if (
-                isEditingCurrentUser &&
-                role !== "Owner"
-            ) {
-
+            if (isEditingCurrentUser && role !== "Owner") {
                 showDialog(
                     "Action Not Allowed",
                     "You cannot change your own Owner role.",
                     "warning"
                 );
-
                 return;
             }
 
@@ -730,97 +829,135 @@ document.addEventListener("DOMContentLoaded", () => {
                 normalizeRole(oldUser.role) === "Owner" &&
                 role !== "Owner"
             ) {
-
                 const currentOwnerCount = users.filter(user =>
+                    user.accountStatus === "Active" &&
                     normalizeRole(user.role) === "Owner"
                 ).length;
 
                 if (currentOwnerCount <= 1) {
-
                     showDialog(
                         "Action Not Allowed",
-                        "You cannot remove the role of the last Owner.",
+                        "You cannot remove the role of the last active Owner.",
                         "warning"
                     );
-
                     return;
                 }
             }
 
-            const updatedUser = {
-                ...oldUser,
-                fullname,
+            const userData = {
+                fullName,
                 username,
                 email,
-                password: password || (oldUser ? oldUser.password : ""),
-                role
+                role,
+                password
             };
 
-            // UPDATE EXISTING USER
-            if (isEditing) {
+            const submitButton = userForm.querySelector(
+                'button[type="submit"]'
+            );
 
-                users[Number(editIndex)] = updatedUser;
-
-                if (isEditingCurrentUser) {
-
-                    currentUser = {
-                        ...currentUser,
-                        username: updatedUser.username,
-                        email: updatedUser.email,
-                        name: updatedUser.fullname,
-                        role: updatedUser.role
-                    };
-
-                    sessionStorage.setItem(
-                        SESSION_STORAGE_KEY,
-                        JSON.stringify(currentUser)
-                    );
-
-                    localStorage.setItem(
-                        "loggedInUser",
-                        updatedUser.username
-                    );
-
-                    localStorage.setItem(
-                        "userRole",
-                        updatedUser.role
-                    );
-
-                    localStorage.setItem(
-                        "fullName",
-                        updatedUser.fullname
-                    );
-
-                    updateSidebarProfile();
-                }
-
-                saveUsers();
-                updateSummary();
-                displayUsers();
-                closeUserModal();
-
-                showDialog(
-                    "User Updated",
-                    "User information has been successfully updated.",
-                    "success"
-                );
-
-                return;
+            if (submitButton) {
+                submitButton.disabled = true;
             }
 
-            // ADD NEW USER
-            users.push(updatedUser);
+            try {
+                if (isEditing) {
+                    const response = await apiClient.put(
+                        `/users/${editId}`,
+                        userData
+                    );
 
-            saveUsers();
-            updateSummary();
-            displayUsers();
-            closeUserModal();
+                    if (!response.success || !response.data) {
+                        throw new Error("Unable to update the user.");
+                    }
 
-            showDialog(
-                "User Added",
-                "The new user account has been successfully created.",
-                "success"
-            );
+                    const updatedUser = {
+                        id: response.data.id,
+                        fullName: response.data.fullName,
+                        username: response.data.username,
+                        email: response.data.email,
+                        role: normalizeRole(response.data.role),
+                        accountStatus: normalizeStatus(
+                            response.data.accountStatus
+                        )
+                    };
+
+                    users = users.map(user =>
+                        Number(user.id) === Number(editId)
+                            ? updatedUser
+                            : user
+                    );
+
+                    if (isEditingCurrentUser) {
+                        currentUser = {
+                            ...currentUser,
+                            fullName: updatedUser.fullName,
+                            username: updatedUser.username,
+                            email: updatedUser.email,
+                            role: updatedUser.role
+                        };
+
+                        updateSidebarProfile();
+                    }
+
+                    updateSummary();
+                    displayUsers();
+                    closeUserModal();
+
+                    showDialog(
+                        "User Updated",
+                        "User information has been successfully updated.",
+                        "success"
+                    );
+
+                } else {
+                    const response = await apiClient.post(
+                        "/users",
+                        userData
+                    );
+
+                    if (!response.success || !response.data) {
+                        throw new Error("Unable to create the user.");
+                    }
+
+                    const newUser = {
+                        id: response.data.id,
+                        fullName: response.data.fullName,
+                        username: response.data.username,
+                        email: response.data.email,
+                        role: normalizeRole(response.data.role),
+                        accountStatus: normalizeStatus(
+                            response.data.accountStatus
+                        )
+                    };
+
+                    users.push(newUser);
+
+                    updateSummary();
+                    displayUsers();
+                    closeUserModal();
+
+                    showDialog(
+                        "User Added",
+                        "The new user account has been successfully created.",
+                        "success"
+                    );
+                }
+
+            } catch (error) {
+                console.error("User save failed:", error);
+
+                showDialog(
+                    isEditing ? "Unable to Update User" : "Unable to Add User",
+                    getErrorMessage(error),
+                    "error"
+                );
+
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            }
         });
     }
 
@@ -845,30 +982,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 14. SEARCH USERS
+    // 14. SEARCH AND FILTERS
     // ==========================================
 
     if (userSearch) {
         userSearch.addEventListener("input", displayUsers);
     }
 
-    // ==========================================
-    // 15. FILTER USERS BY ROLE
-    // ==========================================
-
     if (roleFilter) {
         roleFilter.addEventListener("change", displayUsers);
     }
 
+    if (accountStatusFilter) {
+        accountStatusFilter.addEventListener("change", displayUsers);
+    }
+
     // ==========================================
-    // 16. SIDEBAR NAVIGATION
+    // 15. SIDEBAR NAVIGATION
     // ==========================================
 
     function isMobileView() {
         return window.innerWidth <= 850;
     }
 
-    // Update sidebar button accessibility states
     function updateSidebarButtonStates() {
         if (!sidebar) return;
 
@@ -890,25 +1026,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Close Analytics dropdown
     function closeAnalyticsDropdown() {
         if (!analyticsToggle || !analyticsNavList) return;
 
         analyticsNavList.classList.add("collapsed");
-
         analyticsToggle.setAttribute("aria-expanded", "false");
     }
 
-    // Open Analytics dropdown
-    function openAnalyticsDropdown() {
-        if (!analyticsToggle || !analyticsNavList) return;
-
-        analyticsNavList.classList.remove("collapsed");
-
-        analyticsToggle.setAttribute("aria-expanded", "true");
-    }
-
-    // Close mobile sidebar
     function closeMobileSidebar() {
         if (!sidebar) return;
 
@@ -918,7 +1042,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSidebarButtonStates();
     }
 
-    // Open mobile sidebar
     function openMobileSidebar() {
         if (!sidebar) return;
 
@@ -928,7 +1051,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSidebarButtonStates();
     }
 
-    // Toggle desktop sidebar collapse
     function toggleDesktopSidebar() {
         if (!sidebar || isMobileView()) return;
 
@@ -936,7 +1058,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sidebar.classList.toggle("collapsed", willCollapse);
 
-        // Close Analytics whenever the sidebar is collapsed
         if (willCollapse) {
             closeAnalyticsDropdown();
         }
@@ -949,7 +1070,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSidebarButtonStates();
     }
 
-    // Restore saved desktop sidebar state
     if (sidebar) {
         const savedSidebarState = localStorage.getItem(
             SIDEBAR_STORAGE_KEY
@@ -963,12 +1083,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSidebarButtonStates();
     }
 
-    // DESKTOP SIDEBAR TOGGLE
     if (sidebarToggle) {
         sidebarToggle.addEventListener("click", toggleDesktopSidebar);
     }
 
-    // MOBILE HEADER HAMBURGER
     if (mobileSidebarToggle) {
         mobileSidebarToggle.addEventListener("click", () => {
             if (sidebar?.classList.contains("mobile-open")) {
@@ -979,12 +1097,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // MOBILE SIDEBAR CLOSE BUTTON
     if (sidebarClose) {
         sidebarClose.addEventListener("click", closeMobileSidebar);
     }
 
-    // Close mobile sidebar when clicking outside
     document.addEventListener("click", event => {
         if (
             !sidebar ||
@@ -1005,7 +1121,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Close mobile sidebar after selecting a navigation link
     if (sidebar) {
         sidebar.querySelectorAll(".nav-item[href]").forEach(navLink => {
             navLink.addEventListener("click", () => {
@@ -1017,27 +1132,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 17. ANALYTICS DROPDOWN
+    // 16. ANALYTICS DROPDOWN
     // ==========================================
 
-    function setupAnalyticsDropdown() {
-
-        const sidebar = document.getElementById("sidebar");
-
-        const dropdownToggle = document.getElementById(
-            "analyticsDropdownToggle"
-        );
-
-        const analyticsNavList = document.getElementById(
-            "analyticsNavList"
-        );
-
-        if (!sidebar || !dropdownToggle || !analyticsNavList) {
-            return;
-        }
-
-        dropdownToggle.addEventListener("click", function (event) {
-
+    if (analyticsToggle && analyticsNavList) {
+        analyticsToggle.addEventListener("click", event => {
             event.preventDefault();
 
             const isCurrentlyCollapsed =
@@ -1045,27 +1144,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
             analyticsNavList.classList.toggle("collapsed");
 
-            dropdownToggle.setAttribute(
+            analyticsToggle.setAttribute(
                 "aria-expanded",
                 String(isCurrentlyCollapsed)
             );
-
         });
-
     }
 
-    setupAnalyticsDropdown();
-
     // ==========================================
-    // 18. LOGOUT CONFIRMATION MODAL
+    // 17. LOGOUT CONFIRMATION MODAL
     // ==========================================
 
     let logoutModalOverlay = null;
     let previousLogoutFocus = null;
 
-    // CLOSE LOGOUT MODAL
     function closeLogoutModal() {
-
         if (!logoutModalOverlay) return;
 
         logoutModalOverlay.classList.remove("show");
@@ -1078,13 +1171,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const modalToRemove = logoutModalOverlay;
 
         window.setTimeout(() => {
-
             modalToRemove.remove();
 
             if (logoutModalOverlay === modalToRemove) {
                 logoutModalOverlay = null;
             }
-
         }, 250);
 
         if (previousLogoutFocus) {
@@ -1092,31 +1183,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // LOGOUT MODAL KEYBOARD CONTROLS
     function handleLogoutModalKeyboard(event) {
-
         if (!logoutModalOverlay) return;
 
-        // Close modal using Escape
         if (event.key === "Escape") {
-
             event.preventDefault();
             closeLogoutModal();
-
             return;
         }
 
-        // Keep keyboard focus inside the modal
         if (event.key === "Tab") {
-
-            const focusableElements = logoutModalOverlay.querySelectorAll(
-                "button:not([disabled])"
-            );
+            const focusableElements =
+                logoutModalOverlay.querySelectorAll(
+                    "button:not([disabled])"
+                );
 
             if (!focusableElements.length) return;
 
             const firstElement = focusableElements[0];
-
             const lastElement =
                 focusableElements[focusableElements.length - 1];
 
@@ -1124,7 +1208,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 event.shiftKey &&
                 document.activeElement === firstElement
             ) {
-
                 event.preventDefault();
                 lastElement.focus();
 
@@ -1132,22 +1215,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 !event.shiftKey &&
                 document.activeElement === lastElement
             ) {
-
                 event.preventDefault();
                 firstElement.focus();
             }
         }
     }
 
-    // OPEN LOGOUT MODAL
     function openLogoutModal() {
-
         if (logoutModalOverlay) return;
 
         previousLogoutFocus = document.activeElement;
 
         logoutModalOverlay = document.createElement("div");
-
         logoutModalOverlay.className = "logout-modal-overlay";
 
         logoutModalOverlay.innerHTML = `
@@ -1158,7 +1237,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 aria-labelledby="logoutModalTitle"
                 aria-describedby="logoutModalMessage"
             >
-
                 <div class="logout-modal-icon">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </div>
@@ -1176,7 +1254,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 </p>
 
                 <div class="logout-modal-actions">
-
                     <button
                         type="button"
                         class="logout-cancel-btn"
@@ -1190,9 +1267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     >
                         Yes Logout
                     </button>
-
                 </div>
-
             </div>
         `;
 
@@ -1206,58 +1281,61 @@ document.addEventListener("DOMContentLoaded", () => {
             ".logout-confirm-btn"
         );
 
-        // Cancel logout
         cancelButton.addEventListener("click", closeLogoutModal);
 
-        // Confirm logout
-        confirmButton.addEventListener("click", () => {
+        confirmButton.addEventListener("click", async () => {
+            confirmButton.disabled = true;
+            confirmButton.textContent = "Logging Out...";
 
-            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            try {
+                await apiClient.post("/auth/logout", {});
+                window.location.replace("login.html");
 
-            localStorage.removeItem("loggedInUser");
-            localStorage.removeItem("userRole");
-            localStorage.removeItem("fullName");
+            } catch (error) {
+                console.error("Logout failed:", error);
 
-            window.location.href = "login.html";
+                confirmButton.disabled = false;
+                confirmButton.textContent = "Yes, Logout";
+
+                const message = logoutModalOverlay?.querySelector(
+                    "#logoutModalMessage"
+                );
+
+                if (message) {
+                    message.textContent =
+                        "Unable to log out. Please check your connection and try again.";
+                }
+            }
         });
 
-        // Close when clicking outside the modal
         logoutModalOverlay.addEventListener("click", event => {
-
             if (event.target === logoutModalOverlay) {
                 closeLogoutModal();
             }
         });
 
-        // Register keyboard controls
         document.addEventListener(
             "keydown",
             handleLogoutModalKeyboard
         );
 
-        // Show modal and focus Cancel button
         requestAnimationFrame(() => {
-
             logoutModalOverlay.classList.add("show");
-
             cancelButton.focus();
         });
     }
 
-    // LOGOUT BUTTON EVENT
     if (logoutBtn) {
         logoutBtn.addEventListener("click", openLogoutModal);
     }
 
     // ==========================================
-    // 19. GLOBAL ESCAPE KEY
+    // 18. GLOBAL ESCAPE KEY
     // ==========================================
 
     document.addEventListener("keydown", event => {
-
         if (event.key !== "Escape") return;
 
-        // Logout modal handles its own Escape key
         if (logoutModalOverlay) return;
 
         closeUserModal();
@@ -1269,11 +1347,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ==========================================
-    // 20. HANDLE SCREEN RESIZING
+    // 19. HANDLE SCREEN RESIZING
     // ==========================================
 
     window.addEventListener("resize", () => {
-
         if (!isMobileView()) {
             closeMobileSidebar();
         }
@@ -1282,24 +1359,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ==========================================
-    // 21. INITIAL DISPLAY
+    // 20. INITIALIZE USER MANAGEMENT
     // ==========================================
 
-    users = users.map(user => ({
-        ...user,
-        role: normalizeRole(user.role)
-    }));
-
-    saveUsers();
-
     updateSidebarProfile();
-    updateSummary();
-    displayUsers();
-
-    // Initialize current date and time
     updateCurrentDateTime();
 
-    // Update the displayed time every second
     window.setInterval(updateCurrentDateTime, 1000);
+
+    try {
+        await loadUsers();
+
+        updateSummary();
+        displayUsers();
+
+    } catch (error) {
+        console.error("Unable to load users:", error);
+
+        if (usersTableBody) {
+            usersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px;">
+                        Unable to load users from the server.
+                        Please refresh the page and try again.
+                    </td>
+                </tr>
+            `;
+        }
+
+        showDialog(
+            "Unable to Load Users",
+            getErrorMessage(error),
+            "error"
+        );
+    }
 
 });

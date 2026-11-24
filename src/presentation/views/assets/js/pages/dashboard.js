@@ -4,6 +4,8 @@
 
 import { transactionApi } from '../api/transactionApi.js';
 import { productApi } from '../api/productApi.js';
+import { apiClient } from '../api/apiClient.js';
+
 
 
 // =========================================================
@@ -38,10 +40,199 @@ if (
 
 
 // =========================================================
-// 3. INITIALIZE DASHBOARD
+// 3. AUTHENTICATION
+// =========================================================
+
+async function verifyAuthentication() {
+
+    try {
+
+        const response = await apiClient.get("/auth/me");
+
+        if (!response.success || !response.data?.user) {
+            throw new Error("Unable to verify your account.");
+        }
+
+        const user = response.data.user;
+
+        updateUserProfile(user);
+
+        return user;
+
+    } catch (error) {
+
+        console.error("Authentication failed:", error);
+
+        // Redirect users with missing or invalid sessions.
+
+        if (
+            error.status === 401 ||
+            error.status === 403 ||
+            error.status === 404
+        ) {
+
+            window.location.replace("./login.html");
+
+            return null;
+
+        }
+
+        // Show an error page if the server cannot be reached.
+
+        document.body.innerHTML = `
+
+            <main style="
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                font-family: 'DM Sans', sans-serif;
+                background: #f7f4ef;
+                text-align: center;
+            ">
+
+                <section style="
+                    max-width: 420px;
+                    padding: 40px;
+                    background: #ffffff;
+                    border-radius: 16px;
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+                ">
+
+                    <h2 style="
+                        color: #35231c;
+                        margin-bottom: 12px;
+                    ">
+                        Unable to Verify Your Session
+                    </h2>
+
+                    <p style="
+                        color: #8c7f77;
+                        line-height: 1.6;
+                        margin-bottom: 24px;
+                    ">
+                        We couldn't connect to the CaféSense server.
+                        Please check your connection and try again.
+                    </p>
+
+                    <button
+                        onclick="window.location.reload()"
+                        style="
+                            padding: 12px 24px;
+                            border: none;
+                            border-radius: 8px;
+                            background: #b97845;
+                            color: white;
+                            font-weight: 600;
+                            cursor: pointer;
+                        "
+                    >
+                        Try Again
+                    </button>
+
+                </section>
+
+            </main>
+
+        `;
+
+        return null;
+
+    }
+
+}
+
+
+// =========================================================
+// 4. UPDATE LOGGED-IN USER PROFILE AND ROLE VISIBILITY
+// =========================================================
+
+function updateUserProfile(user) {
+
+    const fullName = user.fullName || user.username || "User";
+
+    const role = String(user.role || "Staff").trim();
+
+    const normalizedRole = role.toLowerCase();
+
+    const isOwner = normalizedRole === "owner";
+
+    const isManager = normalizedRole === "manager";
+
+    const canViewAnalytics = isOwner || isManager;
+
+
+    // UPDATE USER NAME
+
+    setText("display-user-name", fullName);
+
+
+    // UPDATE USER ROLE
+
+    setText("display-user-role", role);
+
+
+    // UPDATE ROLE BADGE
+
+    setText("role-badge", `${role} Portal`);
+
+
+    // GENERATE USER INITIALS
+
+    const avatar = document.getElementById("display-user-avatar");
+
+    if (avatar) {
+
+        const initials = fullName
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(name => name.charAt(0).toUpperCase())
+            .join("");
+
+        avatar.textContent = initials || "U";
+
+    }
+
+
+    // OWNER-ONLY ELEMENTS
+
+    document.querySelectorAll(".owner-only").forEach(element => {
+
+        element.style.display = isOwner ? "" : "none";
+
+    });
+
+
+    // OWNER AND MANAGER ELEMENTS
+
+    document.querySelectorAll(".owner-manager-only").forEach(element => {
+
+        element.style.display = canViewAnalytics ? "" : "none";
+
+    });
+
+}
+
+
+// =========================================================
+// 5. INITIALIZE DASHBOARD
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", async function () {
+
+    // VERIFY LOGIN BEFORE LOADING DASHBOARD.
+
+    const currentUser = await verifyAuthentication();
+
+    if (!currentUser) {
+        return;
+    }
+
+
+    // LOAD DASHBOARD DATA AFTER AUTHENTICATION.
 
     await loadDashboardData();
 
@@ -54,12 +245,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     renderPaymentMethodsChart();
     renderCustomerTypesChart();
 
+
     const filterBtn = document.getElementById("filterBtn");
     const resetBtn = document.getElementById("resetBtn");
+
 
     if (filterBtn) {
         filterBtn.addEventListener("click", applyFilters);
     }
+
 
     if (resetBtn) {
 
@@ -82,13 +276,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     }
 
+
     applyFilters();
 
 });
 
 
+
 // =========================================================
-// 4. LOAD DASHBOARD DATA FROM DATABASE
+// 6. LOAD DASHBOARD DATA FROM DATABASE
 // =========================================================
 
 async function loadDashboardData() {
@@ -140,8 +336,9 @@ async function loadDashboardData() {
 }
 
 
+
 // =========================================================
-// 5. CURRENT DATE AND TIME
+// 7. CURRENT DATE AND TIME
 // =========================================================
 
 function setCurrentDate() {
@@ -183,8 +380,9 @@ function setCurrentDate() {
 }
 
 
+
 // =========================================================
-// 6. TRANSACTION DATE HELPERS
+// 8. TRANSACTION DATE HELPERS
 // =========================================================
 
 function parseTransactionDate(dateString) {
@@ -330,8 +528,9 @@ function getTransactionCustomerTypes(transaction) {
 }
 
 
+
 // =========================================================
-// 7. FILTER TRANSACTIONS
+// 9. FILTER TRANSACTIONS
 // =========================================================
 
 function applyFilters() {
@@ -487,8 +686,9 @@ function applyFilters() {
 }
 
 
+
 // =========================================================
-// 8. UPDATE DASHBOARD
+// 10. UPDATE DASHBOARD
 // =========================================================
 
 function updateDashboard(data) {
@@ -692,8 +892,9 @@ function updateDashboard(data) {
 }
 
 
+
 // =========================================================
-// 9. HELPER FUNCTIONS
+// 11. HELPER FUNCTIONS
 // =========================================================
 
 function getTopEntry(object) {
@@ -798,8 +999,9 @@ function escapeHTML(value) {
 }
 
 
+
 // =========================================================
-// 10. RECENT TRANSACTIONS
+// 12. RECENT TRANSACTIONS
 // =========================================================
 
 function updateRecentTransactions(data) {
@@ -875,8 +1077,9 @@ function updateRecentTransactions(data) {
 }
 
 
+
 // =========================================================
-// 11. BUSINESS ALERTS
+// 13. BUSINESS ALERTS
 // =========================================================
 
 function updateBusinessAlerts() {
@@ -992,8 +1195,9 @@ function updateBusinessAlerts() {
 }
 
 
+
 // =========================================================
-// 12. HOURLY SALES CHART
+// 14. HOURLY SALES CHART
 // =========================================================
 
 function renderHourlySalesChart() {
@@ -1167,8 +1371,9 @@ function updateHourlyChart(data) {
 }
 
 
+
 // =========================================================
-// 13. PAYMENT METHODS CHART
+// 15. PAYMENT METHODS CHART
 // =========================================================
 
 function renderPaymentMethodsChart() {
@@ -1339,8 +1544,9 @@ function updatePaymentChart(data) {
 }
 
 
+
 // =========================================================
-// 14. CUSTOMER TYPE DISTRIBUTION CHART
+// 16. CUSTOMER TYPE DISTRIBUTION CHART
 // =========================================================
 
 function renderCustomerTypesChart() {
@@ -1504,8 +1710,9 @@ function updateCustomerChart(data) {
 }
 
 
+
 // =========================================================
-// 15. SIDEBAR FUNCTIONALITY
+// 17. SIDEBAR FUNCTIONALITY
 // =========================================================
 
 function setupSidebar() {
@@ -1785,8 +1992,9 @@ function setupSidebar() {
 }
 
 
+
 // =========================================================
-// 16. ANALYTICS DROPDOWN
+// 18. ANALYTICS DROPDOWN
 // =========================================================
 
 function setupAnalyticsDropdown() {
@@ -1822,8 +2030,9 @@ function setupAnalyticsDropdown() {
 }
 
 
+
 // =========================================================
-// 17. CLOSE MOBILE SIDEBAR
+// 19. CLOSE MOBILE SIDEBAR
 // =========================================================
 
 function closeMobileSidebar(sidebar, toggleButton) {
@@ -1846,8 +2055,9 @@ function closeMobileSidebar(sidebar, toggleButton) {
 }
 
 
+
 // =========================================================
-// 18. LOGOUT CONFIRMATION MODAL
+// 20. LOGOUT CONFIRMATION MODAL
 // =========================================================
 
 function setupLogout() {
@@ -2037,13 +2247,46 @@ function setupLogout() {
         });
 
 
-        // CONFIRM LOGOUT
+        // CONFIRM LOGOUT THROUGH THE BACKEND
 
-        confirmButton.addEventListener("click", function () {
+        confirmButton.addEventListener("click", async function () {
 
-            sessionStorage.clear();
+            confirmButton.disabled = true;
 
-            window.location.href = "./login.html";
+            confirmButton.innerHTML = `
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Logging Out...
+            `;
+
+            try {
+
+                await apiClient.post("/auth/logout", {});
+
+                window.location.replace("./login.html");
+
+            } catch (error) {
+
+                console.error("Logout failed:", error);
+
+                confirmButton.disabled = false;
+
+                confirmButton.innerHTML = `
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Yes, Logout
+                `;
+
+                const description = logoutModal.querySelector(
+                    "#logout-modal-description"
+                );
+
+                if (description) {
+
+                    description.textContent =
+                        "Unable to log out. Please check your connection and try again.";
+
+                }
+
+            }
 
         });
 

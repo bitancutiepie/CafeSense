@@ -1608,3 +1608,49 @@ a {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ACCOUNT STATUS FILTER */
+#accountStatusFilter {
+    min-width: 165px;
+}
+
+/* ACCOUNT STATUS BADGES */
+.account-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.account-status-active {
+    background: #e5f3e9;
+    color: #39845b;
+}
+
+.account-status-inactive {
+    background: #f4e8e5;
+    color: #a94b43;
+}
+
+/* REACTIVATE BUTTON */
+.action-btn.reactivate-btn {
+    color: #39845b;
+    background: #e5f3e9;
+    border: 1px solid #cce6d4;
+}
+
+.action-btn.reactivate-btn:hover {
+    background: #39845b;
+    color: #ffffff;
+    border-color: #39845b;
+}
+
+/* ACTION BUTTON DISABLED STATE */
+.action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

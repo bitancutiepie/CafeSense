@@ -1,3 +1,4 @@
+
 /* =========================================
    CAFÉSENSE - LOGIN PAGE STYLES
 ========================================= */
@@ -98,7 +99,7 @@ body {
 
 
 /* =========================================
-   4. LOGIN AND REGISTER CARDS
+   4. LOGIN, REGISTER AND RESET CARDS
 ========================================= */
 
 .login-card {
@@ -124,6 +125,11 @@ body {
 .register-card {
     max-width: 460px;
     padding: 30px 38px;
+}
+
+.reset-card {
+    max-width: 460px;
+    padding: 35px 38px;
 }
 
 .hidden {
@@ -157,6 +163,11 @@ body {
     font-size: 38px;
 }
 
+.reset-card .brand-name {
+    margin-bottom: 18px;
+    font-size: 38px;
+}
+
 
 /* =========================================
    6. INPUT FIELDS
@@ -169,6 +180,10 @@ body {
 
 .register-card .input-group {
     margin-bottom: 13px;
+}
+
+.reset-card .input-group {
+    margin-bottom: 15px;
 }
 
 .input-group input,
@@ -197,6 +212,10 @@ body {
 .register-card .input-group input,
 .register-card .input-group select {
     height: 47px;
+}
+
+.reset-card .input-group input {
+    height: 50px;
 }
 
 .input-group input::placeholder {
@@ -236,8 +255,6 @@ body {
 .password-input input {
     padding-right: 75px;
 }
-
-/* Hide Microsoft Edge's built-in password reveal icon */
 
 input[type="password"]::-ms-reveal {
     display: none;
@@ -355,6 +372,10 @@ input[type="password"]::-ms-reveal {
     margin-top: 17px;
 }
 
+.reset-card .account-text {
+    margin-top: 20px;
+}
+
 .switch-link {
     margin-left: 3px;
     font-weight: bold;
@@ -384,7 +405,212 @@ input[type="password"]::-ms-reveal {
 
 
 /* =========================================
-   13. ACCESSIBILITY
+   13. PASSWORD RESET DESCRIPTION
+========================================= */
+
+.reset-description {
+    margin-bottom: 25px;
+
+    color: var(--text-light);
+
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =========================================
+   14. CUSTOM CONFIRMATION MODAL
+========================================= */
+
+/* Modal background overlay */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(35, 19, 11, 0.65);
+    backdrop-filter: blur(5px);
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+/* Modal container */
+
+.confirmation-modal {
+    width: 100%;
+    max-width: 390px;
+
+    padding: 32px 30px;
+
+    border: 1px solid rgba(248, 224, 197, 0.6);
+    border-radius: 20px;
+
+    background: linear-gradient(
+        145deg,
+        #FFFEFA,
+        #F8EBDD
+    );
+
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.3);
+
+    text-align: center;
+
+    transform: translateY(0) scale(1);
+
+    transition: transform 0.25s ease;
+}
+
+/* Modal icon */
+
+.modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+
+    margin: 0 auto 19px;
+
+    border-radius: 50%;
+
+    background: #F8E0C5;
+    color: #4B2816;
+
+    font-family: Georgia, serif;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+/* Modal heading */
+
+.confirmation-modal h2 {
+    margin-bottom: 12px;
+
+    color: var(--brown-dark);
+
+    font-family: Georgia, serif;
+    font-size: 23px;
+}
+
+/* Modal message */
+
+.confirmation-modal p {
+    margin-bottom: 26px;
+
+    color: #735747;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Modal buttons */
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.modal-button {
+    flex: 1;
+
+    min-height: 45px;
+    padding: 10px 16px;
+
+    border: 0;
+    border-radius: 30px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.modal-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Cancel button */
+
+.cancel-button {
+    background: #EDE3DA;
+    color: #594235;
+}
+
+.cancel-button:hover {
+    background: #E2D1C2;
+}
+
+/* Confirm button */
+
+.confirm-button {
+    background: var(--brown);
+    color: #FFFFFF;
+}
+
+.confirm-button:hover {
+    background: var(--brown-dark);
+    box-shadow: 0 4px 10px rgba(75, 40, 22, 0.2);
+}
+
+/* Modal hidden state */
+
+.modal-overlay.hidden {
+    display: flex !important;
+
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+}
+
+.modal-overlay.hidden .confirmation-modal {
+    transform: translateY(15px) scale(0.95);
+}
+
+/* Success notification */
+
+.confirmation-modal.success .modal-icon {
+    background: #DDEED8;
+    color: #37633A;
+}
+
+/* Error notification */
+
+.confirmation-modal.error .modal-icon {
+    background: #F8DCD5;
+    color: #9B3E2E;
+}
+
+/* Focus accessibility */
+
+.modal-button:focus-visible {
+    outline: 2px solid var(--brown);
+    outline-offset: 3px;
+}
+
+
+/* =========================================
+   15. ACCESSIBILITY
 ========================================= */
 
 .main-button:focus-visible,
@@ -396,7 +622,7 @@ a:focus-visible {
 
 
 /* =========================================
-   14. MOBILE RESPONSIVENESS
+   16. MOBILE RESPONSIVENESS
 ========================================= */
 
 @media (max-width: 480px) {
@@ -421,11 +647,32 @@ a:focus-visible {
     .register-card .brand-name {
         font-size: 34px;
     }
+
+    .reset-card {
+        padding: 30px 23px;
+    }
+
+    .reset-card .brand-name {
+        font-size: 34px;
+    }
+
+    .confirmation-modal {
+        max-width: 100%;
+        padding: 28px 22px;
+    }
+
+    .confirmation-modal h2 {
+        font-size: 21px;
+    }
+
+    .modal-actions {
+        gap: 9px;
+    }
 }
 
 
 /* =========================================
-   15. SMALL SCREEN HEIGHT
+   17. SMALL SCREEN HEIGHT
 ========================================= */
 
 @media (max-height: 650px) {

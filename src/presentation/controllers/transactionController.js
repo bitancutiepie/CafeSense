@@ -24,7 +24,10 @@ class TransactionController {
     async createTransaction(req, res, next) {
         try {
             const transaction =
-                await transactionService.createTransaction(req.body);
+                await transactionService.createTransaction(
+                    req.body,
+                    req.user.id
+                );
 
             return ApiResponse.success(
                 res,

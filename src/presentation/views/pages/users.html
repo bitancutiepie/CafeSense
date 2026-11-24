@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,8 +25,6 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../assets/css/pages/users.css">
 
-    <!-- JavaScript -->
-    <script src="../assets/js/pages/users.js" defer></script>
 </head>
 
 <body class="dashboard-body">
@@ -426,11 +425,19 @@
 
                         </div>
 
+                        <!-- ROLE FILTER -->
                         <select id="roleFilter">
                             <option value="All">All Roles</option>
                             <option value="Owner">Owner</option>
                             <option value="Manager">Manager</option>
                             <option value="Staff">Staff</option>
+                        </select>
+
+                        <!-- ACCOUNT STATUS FILTER -->
+                        <select id="accountStatusFilter">
+                            <option value="All">All Statuses</option>
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
 
                     </div>
@@ -445,6 +452,7 @@
                                     <th>User</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -635,6 +643,9 @@
         </div>
 
     </div>
+
+    <!-- JavaScript -->
+    <script type="module" src="../assets/js/pages/users.js"></script>
 
 </body>
 </html>
